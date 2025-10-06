@@ -1,19 +1,13 @@
-// src/app/layout.tsx
-
 import type { Metadata } from "next";
-import { Poppins } from "next/font/google";
+import { Inter } from "next/font/google";
+import "./globals.css";
 import { AuthProvider } from "@/context/AuthContext";
-import "@/styles/globals.css";
 
-const poppins = Poppins({
-  weight: ["300", "400", "500", "600", "700"],
-  subsets: ["latin"],
-  display: "swap",
-});
+const inter = Inter({ subsets: ["latin"] });
 
 export const metadata: Metadata = {
   title: "Thriftian - Pre-loved Marketplace",
-  description: "A secure marketplace for buying and selling pre-loved items.",
+  description: "Secure marketplace for pre-loved items",
 };
 
 export default function RootLayout({
@@ -23,7 +17,7 @@ export default function RootLayout({
 }) {
   return (
     <html lang="en">
-      <body className={poppins.className}>
+      <body className={inter.className}>
         <AuthProvider>{children}</AuthProvider>
       </body>
     </html>
