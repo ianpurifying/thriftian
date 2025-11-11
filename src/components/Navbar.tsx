@@ -1,77 +1,141 @@
 "use client";
 
 import Link from "next/link";
-import { useAuth } from "@/context/AuthContext";
-import { FiShoppingBag, FiUser, FiLogOut } from "react-icons/fi";
+import { useAuth } from "@/contexts/AuthContext";
+import { useCart } from "@/contexts/CartContext";
+import { useEffect, useState } from "react";
+
+interface Notification {
+  id: string;
+  isRead: boolean;
+  message: string;
+  createdAt: string;
+}
 
 export default function Navbar() {
-  const { user, signOut } = useAuth();
+  const { user, signOut, firebaseUser } = useAuth();
+  const { itemCount } = useCart();
+  const [unreadCount, setUnreadCount] = useState(0);
 
-  const handleSignOut = async () => {
-    try {
-      await signOut();
-      window.location.href = "/";
-    } catch (error) {
-      console.error("Sign out error:", error);
-    }
-  };
+  // Fetch unread notifications count
+  useEffect(() => {
+    if (!firebaseUser) return;
+
+    const fetchUnreadCount = async () => {
+      try {
+        const token = await firebaseUser.getIdToken();
+        const response = await fetch("/api/notifications", {
+          headers: { Authorization: `Bearer ${token}` },
+        });
+        if (response.ok) {
+          const data = await response.json();
+          const count = (data.notifications || []).filter(
+            (n: Notification) => !n.isRead
+          ).length;
+          setUnreadCount(count);
+        }
+      } catch (error) {
+        console.error("Failed to fetch notifications:", error);
+      }
+    };
+
+    fetchUnreadCount();
+
+    // Optionally, poll every 30s for new notifications
+    const interval = setInterval(fetchUnreadCount, 30000);
+    return () => clearInterval(interval);
+  }, [firebaseUser]);
 
   return (
-    <nav className="bg-white shadow-sm border-b border-gray-200">
+    <nav className="bg-amber-100 border-b-4 border-amber-900 sticky top-0 z-40">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="flex justify-between items-center h-16">
-          <Link href="/" className="flex items-center space-x-2">
-            <FiShoppingBag className="h-8 w-8 text-blue-600" />
-            <span className="text-2xl font-bold text-gray-900">Thriftian</span>
-          </Link>
+        <div className="flex justify-between h-20 items-center">
+          <div className="flex items-center gap-8">
+            <Link
+              href="/"
+              className="font-rye text-3xl text-amber-900 retro-text-shadow hover:text-amber-700 transition-colors"
+            >
+              Thriftian
+            </Link>
 
-          <div className="flex items-center space-x-4">
-            {user ? (
-              <>
-                <div className="flex items-center space-x-2">
-                  <FiUser className="h-5 w-5 text-gray-600" />
-                  <span className="text-sm text-gray-700">
-                    {user.displayName}
-                  </span>
-                  <span className="text-xs bg-blue-100 text-blue-800 px-2 py-1 rounded-full">
-                    {user.role}
-                  </span>
-                </div>
+            {user && (
+              <div className="hidden md:flex gap-6 font-nunito font-semibold text-amber-900">
+                <Link
+                  href="/"
+                  className="hover:text-teal-700 transition-colors"
+                >
+                  Browse
+                </Link>
                 {user.role === "seller" && (
                   <Link
                     href="/dashboard/seller"
-                    className="text-sm text-gray-700 hover:text-blue-600 transition"
+                    className="hover:text-teal-700 transition-colors"
                   >
-                    Dashboard
+                    Seller Hub
                   </Link>
                 )}
                 {user.role === "admin" && (
                   <Link
                     href="/dashboard/admin"
-                    className="text-sm text-gray-700 hover:text-blue-600 transition"
+                    className="hover:text-teal-700 transition-colors"
                   >
                     Admin
                   </Link>
                 )}
-                <button
-                  onClick={handleSignOut}
-                  className="flex items-center space-x-1 text-sm text-gray-700 hover:text-red-600 transition"
+              </div>
+            )}
+          </div>
+
+          <div className="flex items-center gap-4 font-nunito font-semibold text-amber-900 relative">
+            {user ? (
+              <>
+                <Link
+                  href="/orders"
+                  className="hover:text-teal-700 transition-colors hidden sm:block"
                 >
-                  <FiLogOut className="h-4 w-4" />
-                  <span>Sign Out</span>
+                  Orders
+                </Link>
+                <Link
+                  href="/cart"
+                  className="hover:text-teal-700 transition-colors bg-amber-600 text-white px-3 py-2 rounded-lg border-2 border-amber-800 retro-shadow"
+                >
+                  🛒 ({itemCount})
+                </Link>
+
+                {/* Notifications bell with badge */}
+                <Link
+                  href="/notifications"
+                  className="hover:text-teal-700 transition-colors hidden sm:block relative"
+                >
+                  🔔
+                  {unreadCount > 0 && (
+                    <span className="absolute -top-2 -right-2 bg-red-600 text-white text-xs font-bold w-5 h-5 flex items-center justify-center rounded-full">
+                      {unreadCount}
+                    </span>
+                  )}
+                </Link>
+
+                <span className="text-sm hidden md:block font-pacifico text-teal-700">
+                  {user.name}
+                </span>
+                <button
+                  onClick={signOut}
+                  className="hover:text-red-700 transition-colors"
+                >
+                  Sign Out
                 </button>
               </>
             ) : (
               <>
                 <Link
-                  href="/auth/login"
-                  className="text-sm text-gray-700 hover:text-blue-600 transition"
+                  href="/login"
+                  className="hover:text-teal-700 transition-colors"
                 >
                   Login
                 </Link>
                 <Link
-                  href="/auth/signup"
-                  className="px-4 py-2 bg-blue-600 text-white text-sm rounded-lg hover:bg-blue-700 transition"
+                  href="/signup"
+                  className="bg-amber-600 text-white px-4 py-2 rounded-lg border-2 border-amber-800 retro-shadow-hover"
                 >
                   Sign Up
                 </Link>

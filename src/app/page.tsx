@@ -1,119 +1,175 @@
 "use client";
 
-import { useEffect } from "react";
-import { useRouter } from "next/navigation";
-import { useAuth } from "@/context/AuthContext";
-import Navbar from "@/components/Navbar";
-import { FiPackage, FiTrendingUp, FiShield } from "react-icons/fi";
+import { useEffect, useState } from "react";
+import { Product } from "@/lib/types";
+import ProductCard from "@/components/ProductCard";
+import Input from "@/components/Input";
+import Select from "@/components/Select";
 
 export default function HomePage() {
-  const { user, loading } = useAuth();
-  const router = useRouter();
+  const [products, setProducts] = useState<Product[]>([]);
+  const [filteredProducts, setFilteredProducts] = useState<Product[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [searchTerm, setSearchTerm] = useState("");
+  const [categoryFilter, setCategoryFilter] = useState("all");
+  const [conditionFilter, setConditionFilter] = useState("all");
+  const [sortBy, setSortBy] = useState("newest");
 
   useEffect(() => {
-    if (!loading && user) {
-      if (user.role === "seller") {
-        router.replace("/dashboard/seller");
-      } else if (user.role === "admin") {
-        router.replace("/dashboard/admin");
-      }
+    fetchProducts();
+  }, []);
+
+  useEffect(() => {
+    filterAndSortProducts();
+  }, [products, searchTerm, categoryFilter, conditionFilter, sortBy]);
+
+  const fetchProducts = async () => {
+    try {
+      const response = await fetch("/api/products");
+      const data = await response.json();
+      setProducts(data.products || []);
+    } catch (error) {
+      console.error("Failed to fetch products:", error);
+    } finally {
+      setLoading(false);
     }
-  }, [user, loading, router]);
+  };
+
+  const filterAndSortProducts = () => {
+    let filtered = [...products];
+
+    if (searchTerm) {
+      filtered = filtered.filter(
+        (p) =>
+          p.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
+          p.description.toLowerCase().includes(searchTerm.toLowerCase()) ||
+          p.brand?.toLowerCase().includes(searchTerm.toLowerCase())
+      );
+    }
+
+    if (categoryFilter !== "all") {
+      filtered = filtered.filter((p) => p.category === categoryFilter);
+    }
+
+    if (conditionFilter !== "all") {
+      filtered = filtered.filter((p) => p.condition === conditionFilter);
+    }
+
+    switch (sortBy) {
+      case "price-low":
+        filtered.sort((a, b) => a.price - b.price);
+        break;
+      case "price-high":
+        filtered.sort((a, b) => b.price - a.price);
+        break;
+      case "rating":
+        filtered.sort((a, b) => b.averageRating - a.averageRating);
+        break;
+      default:
+        filtered.sort(
+          (a, b) =>
+            new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+        );
+    }
+
+    setFilteredProducts(filtered);
+  };
+
+  const categories = [
+    "all",
+    ...Array.from(new Set(products.map((p) => p.category))),
+  ];
+  const conditions = ["all", "New", "Like New", "Used", "Fair"];
 
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-600"></div>
+      <div className="max-w-7xl mx-auto px-4 py-8">
+        <div className="bg-amber-50 border-4 border-amber-800 rounded-lg p-8 text-center retro-shadow">
+          <div className="flex items-center justify-center gap-3 mb-4">
+            <div
+              className="w-4 h-4 bg-amber-600 rounded-full animate-bounce"
+              style={{ animationDelay: "0s" }}
+            ></div>
+            <div
+              className="w-4 h-4 bg-teal-600 rounded-full animate-bounce"
+              style={{ animationDelay: "0.2s" }}
+            ></div>
+            <div
+              className="w-4 h-4 bg-amber-600 rounded-full animate-bounce"
+              style={{ animationDelay: "0.4s" }}
+            ></div>
+          </div>
+          <p className="text-amber-900 font-nunito text-lg">
+            Loading vintage treasures...
+          </p>
+        </div>
       </div>
     );
   }
 
-  if (user && (user.role === "seller" || user.role === "admin")) {
-    return null;
-  }
-
   return (
-    <div className="min-h-screen bg-gray-50">
-      <Navbar />
+    <div className="max-w-7xl mx-auto px-4 py-8">
+      <h1 className="text-5xl md:text-6xl font-rye text-amber-900 mb-2 retro-text-shadow text-center typewriter inline-block">
+        Browse Our Collection
+      </h1>
+      <p className="text-center text-teal-700 font-pacifico text-xl mb-8">
+        ~ Vintage Finds & Pre-Loved Gems ~
+      </p>
 
-      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
-        <section className="text-center mb-16">
-          <h1 className="text-5xl font-bold text-gray-900 mb-4">
-            Welcome to Thriftian
-          </h1>
-          <p className="text-xl text-gray-600 max-w-2xl mx-auto">
-            Discover amazing pre-loved items at unbeatable prices. Shop
-            sustainably and save money.
+      <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-8">
+        <Input
+          type="text"
+          placeholder="Search treasures..."
+          value={searchTerm}
+          onChange={(e) => setSearchTerm(e.target.value)}
+        />
+
+        <Select
+          value={categoryFilter}
+          onChange={(value) => setCategoryFilter(value)}
+          options={categories.map((c) => ({
+            value: c,
+            label: c === "all" ? "All Categories" : c,
+          }))}
+        />
+
+        <Select
+          value={conditionFilter}
+          onChange={(value) => setConditionFilter(value)}
+          options={conditions.map((c) => ({
+            value: c,
+            label: c === "all" ? "All Conditions" : c,
+          }))}
+        />
+
+        <Select
+          value={sortBy}
+          onChange={(value) => setSortBy(value)}
+          options={[
+            { value: "newest", label: "Newest First" },
+            { value: "price-low", label: "Price: Low to High" },
+            { value: "price-high", label: "Price: High to Low" },
+            { value: "rating", label: "Highest Rated" },
+          ]}
+        />
+      </div>
+
+      {filteredProducts.length === 0 ? (
+        <div className="text-center py-12">
+          <p className="text-2xl font-pacifico text-amber-800 mb-2">
+            No treasures found
           </p>
-        </section>
-
-        <section className="grid md:grid-cols-3 gap-8 mb-16">
-          <div className="bg-white p-8 rounded-lg shadow-sm text-center">
-            <div className="inline-flex items-center justify-center w-16 h-16 bg-blue-100 rounded-full mb-4">
-              <FiPackage className="h-8 w-8 text-blue-600" />
-            </div>
-            <h3 className="text-xl font-semibold text-gray-900 mb-2">
-              Quality Products
-            </h3>
-            <p className="text-gray-600">
-              Every item is carefully inspected to ensure quality and
-              authenticity.
-            </p>
-          </div>
-
-          <div className="bg-white p-8 rounded-lg shadow-sm text-center">
-            <div className="inline-flex items-center justify-center w-16 h-16 bg-green-100 rounded-full mb-4">
-              <FiTrendingUp className="h-8 w-8 text-green-600" />
-            </div>
-            <h3 className="text-xl font-semibold text-gray-900 mb-2">
-              Best Prices
-            </h3>
-            <p className="text-gray-600">
-              Save up to 70% on brand-name items in excellent condition.
-            </p>
-          </div>
-
-          <div className="bg-white p-8 rounded-lg shadow-sm text-center">
-            <div className="inline-flex items-center justify-center w-16 h-16 bg-purple-100 rounded-full mb-4">
-              <FiShield className="h-8 w-8 text-purple-600" />
-            </div>
-            <h3 className="text-xl font-semibold text-gray-900 mb-2">
-              Secure Shopping
-            </h3>
-            <p className="text-gray-600">
-              Shop with confidence using our secure payment and verification
-              system.
-            </p>
-          </div>
-        </section>
-
-        <section className="bg-white rounded-lg shadow-sm p-8 text-center">
-          <h2 className="text-3xl font-bold text-gray-900 mb-4">
-            Start Shopping Today
-          </h2>
-          <p className="text-gray-600 mb-6">
-            {user
-              ? "Browse our marketplace and find your next favorite item."
-              : "Sign up now to start buying and selling pre-loved items."}
+          <p className="text-gray-600 font-nunito">
+            Try adjusting your search filters
           </p>
-          {!user && (
-            <div className="flex justify-center space-x-4">
-              <a
-                href="/auth/signup"
-                className="px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition"
-              >
-                Get Started
-              </a>
-              <a
-                href="/auth/login"
-                className="px-6 py-3 bg-gray-200 text-gray-800 rounded-lg hover:bg-gray-300 transition"
-              >
-                Sign In
-              </a>
-            </div>
-          )}
-        </section>
-      </main>
+        </div>
+      ) : (
+        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
+          {filteredProducts.map((product) => (
+            <ProductCard key={product.id} product={product} />
+          ))}
+        </div>
+      )}
     </div>
   );
 }

@@ -1,13 +1,16 @@
 import type { Metadata } from "next";
-import { Inter } from "next/font/google";
+import { Nunito } from "next/font/google";
 import "./globals.css";
-import { AuthProvider } from "@/context/AuthContext";
+import { AuthProvider } from "@/contexts/AuthContext";
+import { CartProvider } from "@/contexts/CartContext"; // <-- import the CartProvider
+import Navbar from "@/components/Navbar";
+import Footer from "@/components/Footer";
 
-const inter = Inter({ subsets: ["latin"] });
+const nunito = Nunito({ subsets: ["latin"], weight: ["400", "600", "700"] });
 
 export const metadata: Metadata = {
-  title: "Thriftian - Pre-loved Marketplace",
-  description: "Secure marketplace for pre-loved items",
+  title: "Thriftian Marketplace",
+  description: "Pre-loved items marketplace",
 };
 
 export default function RootLayout({
@@ -17,8 +20,18 @@ export default function RootLayout({
 }) {
   return (
     <html lang="en">
-      <body className={inter.className}>
-        <AuthProvider>{children}</AuthProvider>
+      <body className={nunito.className}>
+        <AuthProvider>
+          <CartProvider>
+            {" "}
+            {/* <-- wrap your app with CartProvider */}
+            <div className="flex flex-col min-h-screen">
+              <Navbar />
+              <main className="flex-1">{children}</main>
+              <Footer />
+            </div>
+          </CartProvider>
+        </AuthProvider>
       </body>
     </html>
   );

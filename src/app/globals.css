@@ -1,35 +1,144 @@
+@import url("https://fonts.googleapis.com/css2?family=Rye&family=Pacifico&family=Nunito:wght@400;600;700&display=swap");
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
 * {
-  margin: 0;
-  padding: 0;
   box-sizing: border-box;
+  padding: 0;
+  margin: 0;
 }
 
-html {
-  scroll-behavior: smooth;
-}
-
+html,
 body {
-  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Roboto", "Oxygen",
-    "Ubuntu", "Cantarell", "Fira Sans", "Droid Sans", "Helvetica Neue",
-    sans-serif;
-  -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
+  max-width: 100vw;
+  overflow-x: hidden;
+  background-color: #f5f1e8;
+  background-image: repeating-linear-gradient(
+    0deg,
+    transparent,
+    transparent 2px,
+    rgba(0, 0, 0, 0.02) 2px,
+    rgba(0, 0, 0, 0.02) 4px
+  );
 }
 
-input:focus,
-textarea:focus,
-select:focus {
-  outline: none;
+body::before {
+  content: "";
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-image: url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23d4a574' fill-opacity='0.03'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E");
+  pointer-events: none;
+  z-index: -1;
+  opacity: 0.4;
 }
 
-button {
-  cursor: pointer;
+a {
+  color: inherit;
+  text-decoration: none;
 }
 
-button:disabled {
-  cursor: not-allowed;
+.retro-shadow {
+  box-shadow: 4px 4px 0px rgba(0, 0, 0, 0.15);
+}
+
+.retro-shadow-hover {
+  transition: all 0.2s ease;
+}
+
+.retro-shadow-hover:hover {
+  box-shadow: 6px 6px 0px rgba(0, 0, 0, 0.2);
+  transform: translate(-2px, -2px);
+}
+
+.retro-text-shadow {
+  text-shadow: 2px 2px 0px rgba(0, 0, 0, 0.1);
+}
+
+/* ===== RETRO ANIMATIONS ===== */
+
+/* Price Tag Swing */
+@keyframes swing {
+  0%,
+  100% {
+    transform: rotate(-2deg);
+  }
+  50% {
+    transform: rotate(2deg);
+  }
+}
+
+.price-tag {
+  animation: swing 3s ease-in-out infinite;
+  transform-origin: top center;
+}
+
+/* Vintage Stamp Effect */
+@keyframes stamp {
+  0% {
+    transform: scale(0) rotate(-45deg);
+    opacity: 0;
+  }
+  50% {
+    transform: scale(1.1) rotate(-5deg);
+    opacity: 1;
+  }
+  100% {
+    transform: scale(1) rotate(0deg);
+    opacity: 1;
+  }
+}
+
+.condition-badge {
+  animation: stamp 0.5s cubic-bezier(0.36, 0, 0.66, -0.56);
+}
+
+/* Typewriter Effect */
+@keyframes typewriter {
+  from {
+    width: 0;
+  }
+  to {
+    width: 100%;
+  }
+}
+
+.typewriter {
+  overflow: hidden;
+  white-space: nowrap;
+  animation: typewriter 2s steps(40) 1s forwards;
+  width: 0;
+}
+
+/* Vintage Paper Curl */
+.paper-curl {
+  position: relative;
+}
+
+.paper-curl::after {
+  content: "";
+  position: absolute;
+  bottom: 0;
+  right: 0;
+  width: 0;
+  height: 0;
+  border-style: solid;
+  border-width: 0 0 20px 20px;
+  border-color: transparent transparent #f5f1e8 transparent;
+  box-shadow: -2px 2px 3px rgba(0, 0, 0, 0.1);
+}
+
+/* Hover Effects */
+.vintage-hover:hover {
+  filter: sepia(30%) brightness(105%);
+  transition: filter 0.3s ease;
+}
+
+.lift-hover:hover {
+  transform: translateY(-4px) rotate(-1deg);
+  transition: transform 0.3s ease;
 }
