@@ -6,6 +6,7 @@ import { useRouter } from "next/navigation";
 import { useAuth } from "@/contexts/AuthContext";
 import { Order } from "@/lib/types";
 import OrderCard from "@/components/OrderCard";
+import Loading from "@/components/Loading";
 
 export default function OrdersPage() {
   const router = useRouter();
@@ -52,7 +53,7 @@ export default function OrdersPage() {
   if (loading) {
     return (
       <div className="max-w-7xl mx-auto px-4 py-8">
-        <p>Loading orders...</p>
+        <Loading />
       </div>
     );
   }

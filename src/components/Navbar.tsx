@@ -1,9 +1,11 @@
+// src/components/Navbar.tsx
 "use client";
 
 import Link from "next/link";
 import { useAuth } from "@/contexts/AuthContext";
 import { useCart } from "@/contexts/CartContext";
 import { useEffect, useState } from "react";
+import Image from "next/image";
 
 interface Notification {
   id: string;
@@ -47,14 +49,21 @@ export default function Navbar() {
   }, [firebaseUser]);
 
   return (
-    <nav className="bg-amber-100 border-b-4 border-amber-900 sticky top-0 z-40">
+    <nav className="bg-pink-100 border-b-4 border-purple-400 sticky top-0 z-40">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex justify-between h-20 items-center">
           <div className="flex items-center gap-8">
             <Link
               href="/"
-              className="font-rye text-3xl text-amber-900 retro-text-shadow hover:text-amber-700 transition-colors"
+              className="font-rye text-3xl text-purple-700 retro-text-shadow hover:text-purple-500 transition-colors"
             >
+              <Image
+                src="/logo.png"
+                alt="Thriftian Logo"
+                width={40}
+                height={40}
+                className="inline-block mr-2"
+              />
               Thriftian
             </Link>
 
@@ -97,7 +106,7 @@ export default function Navbar() {
                 </Link>
                 <Link
                   href="/cart"
-                  className="hover:text-teal-700 transition-colors bg-amber-600 text-white px-3 py-2 rounded-lg border-2 border-amber-800 retro-shadow"
+                  className="hover:text-purple-600 transition-colors bg-purple-300 text-white px-3 py-2 rounded-lg border-2 border-purple-500 retro-shadow"
                 >
                   🛒 ({itemCount})
                 </Link>

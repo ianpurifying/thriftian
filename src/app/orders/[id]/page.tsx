@@ -6,6 +6,7 @@ import { useParams, useRouter } from "next/navigation";
 import { useAuth } from "@/contexts/AuthContext";
 import { Order } from "@/lib/types";
 import Button from "@/components/Button";
+import Loading from "@/components/Loading";
 
 export default function OrderDetailPage() {
   const params = useParams();
@@ -53,7 +54,7 @@ export default function OrderDetailPage() {
   if (loading) {
     return (
       <div className="max-w-7xl mx-auto px-4 py-8">
-        <p>Loading order...</p>
+        <Loading />
       </div>
     );
   }

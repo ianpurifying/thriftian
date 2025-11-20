@@ -1,4 +1,3 @@
-// app/dashboard/admin/page.tsx
 "use client";
 
 import { useEffect, useState } from "react";
@@ -6,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { useAuth } from "@/contexts/AuthContext";
 import { Product, User, Order, Report } from "@/lib/types";
 import Button from "@/components/Button";
+import Loading from "@/components/Loading";
 
 export default function AdminDashboard() {
   const router = useRouter();
@@ -151,7 +151,7 @@ export default function AdminDashboard() {
   if (loading) {
     return (
       <div className="max-w-7xl mx-auto px-4 py-8">
-        <p>Loading dashboard...</p>
+        <Loading />
       </div>
     );
   }

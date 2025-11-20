@@ -1,9 +1,10 @@
-@import url("https://fonts.googleapis.com/css2?family=Rye&family=Pacifico&family=Nunito:wght@400;600;700&display=swap");
+@import url("https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700&family=Inter:wght@400;500;700&display=swap");
 
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
+/* ===== GLOBAL RESET ===== */
 * {
   box-sizing: border-box;
   padding: 0;
@@ -14,13 +15,13 @@ html,
 body {
   max-width: 100vw;
   overflow-x: hidden;
-  background-color: #f5f1e8;
+  background-color: #fff6f9; /* soft white-pink base */
   background-image: repeating-linear-gradient(
     0deg,
     transparent,
     transparent 2px,
-    rgba(0, 0, 0, 0.02) 2px,
-    rgba(0, 0, 0, 0.02) 4px
+    rgba(0, 0, 0, 0.015) 2px,
+    rgba(0, 0, 0, 0.015) 4px
   );
 }
 
@@ -31,19 +32,20 @@ body::before {
   left: 0;
   width: 100%;
   height: 100%;
-  background-image: url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23d4a574' fill-opacity='0.03'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E");
+  background-image: url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23d7b4f5' fill-opacity='0.03'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E");
   pointer-events: none;
   z-index: -1;
-  opacity: 0.4;
+  opacity: 0.3;
 }
 
+/* ===== TYPOGRAPHY & LINKS ===== */
 a {
   color: inherit;
   text-decoration: none;
 }
 
 .retro-shadow {
-  box-shadow: 4px 4px 0px rgba(0, 0, 0, 0.15);
+  box-shadow: 4px 4px 0px rgba(0, 0, 0, 0.12);
 }
 
 .retro-shadow-hover {
@@ -51,17 +53,15 @@ a {
 }
 
 .retro-shadow-hover:hover {
-  box-shadow: 6px 6px 0px rgba(0, 0, 0, 0.2);
+  box-shadow: 6px 6px 0px rgba(0, 0, 0, 0.15);
   transform: translate(-2px, -2px);
 }
 
 .retro-text-shadow {
-  text-shadow: 2px 2px 0px rgba(0, 0, 0, 0.1);
+  text-shadow: 2px 2px 0px rgba(0, 0, 0, 0.08);
 }
 
 /* ===== RETRO ANIMATIONS ===== */
-
-/* Price Tag Swing */
 @keyframes swing {
   0%,
   100% {
@@ -77,7 +77,6 @@ a {
   transform-origin: top center;
 }
 
-/* Vintage Stamp Effect */
 @keyframes stamp {
   0% {
     transform: scale(0) rotate(-45deg);
@@ -97,7 +96,6 @@ a {
   animation: stamp 0.5s cubic-bezier(0.36, 0, 0.66, -0.56);
 }
 
-/* Typewriter Effect */
 @keyframes typewriter {
   from {
     width: 0;
@@ -114,7 +112,6 @@ a {
   width: 0;
 }
 
-/* Vintage Paper Curl */
 .paper-curl {
   position: relative;
 }
@@ -128,13 +125,12 @@ a {
   height: 0;
   border-style: solid;
   border-width: 0 0 20px 20px;
-  border-color: transparent transparent #f5f1e8 transparent;
-  box-shadow: -2px 2px 3px rgba(0, 0, 0, 0.1);
+  border-color: transparent transparent #fff6f9 transparent;
+  box-shadow: -2px 2px 3px rgba(0, 0, 0, 0.08);
 }
 
-/* Hover Effects */
 .vintage-hover:hover {
-  filter: sepia(30%) brightness(105%);
+  filter: sepia(20%) brightness(105%);
   transition: filter 0.3s ease;
 }
 

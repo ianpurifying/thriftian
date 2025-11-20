@@ -9,6 +9,7 @@ import Button from "@/components/Button";
 import Input from "@/components/Input";
 import Textarea from "@/components/Textarea";
 import Select from "@/components/Select";
+import Loading from "@/components/Loading";
 
 interface FormData {
   title: string;
@@ -150,7 +151,7 @@ export default function EditProductPage() {
   if (loading) {
     return (
       <div className="max-w-7xl mx-auto px-4 py-8">
-        <p>Loading product...</p>
+        <Loading />
       </div>
     );
   }

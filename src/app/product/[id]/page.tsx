@@ -10,6 +10,7 @@ import { useCart } from "@/contexts/CartContext";
 import Button from "@/components/Button";
 import Input from "@/components/Input";
 import Textarea from "@/components/Textarea";
+import Loading from "@/components/Loading";
 
 export default function ProductPage() {
   const params = useParams();
@@ -116,7 +117,7 @@ export default function ProductPage() {
   if (loading) {
     return (
       <div className="max-w-7xl mx-auto px-4 py-8">
-        <p>Loading product...</p>
+        <Loading />
       </div>
     );
   }

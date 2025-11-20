@@ -5,6 +5,7 @@ import { Product } from "@/lib/types";
 import ProductCard from "@/components/ProductCard";
 import Input from "@/components/Input";
 import Select from "@/components/Select";
+import Loading from "@/components/Loading";
 
 export default function HomePage() {
   const [products, setProducts] = useState<Product[]>([]);
@@ -84,25 +85,7 @@ export default function HomePage() {
   if (loading) {
     return (
       <div className="max-w-7xl mx-auto px-4 py-8">
-        <div className="bg-amber-50 border-4 border-amber-800 rounded-lg p-8 text-center retro-shadow">
-          <div className="flex items-center justify-center gap-3 mb-4">
-            <div
-              className="w-4 h-4 bg-amber-600 rounded-full animate-bounce"
-              style={{ animationDelay: "0s" }}
-            ></div>
-            <div
-              className="w-4 h-4 bg-teal-600 rounded-full animate-bounce"
-              style={{ animationDelay: "0.2s" }}
-            ></div>
-            <div
-              className="w-4 h-4 bg-amber-600 rounded-full animate-bounce"
-              style={{ animationDelay: "0.4s" }}
-            ></div>
-          </div>
-          <p className="text-amber-900 font-nunito text-lg">
-            Loading vintage treasures...
-          </p>
-        </div>
+        <Loading />
       </div>
     );
   }

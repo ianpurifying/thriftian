@@ -166,13 +166,46 @@ export default function AddProductPage() {
             }
           />
 
-          <Input
+          <Select
             label="Category"
             value={formData.category}
-            onChange={(e) =>
-              setFormData({ ...formData, category: e.target.value })
-            }
-            required
+            onChange={(value) => setFormData({ ...formData, category: value })}
+            options={[
+              { label: "— Apparel —", value: "" },
+              { label: "Tops", value: "Tops" },
+              { label: "Bottoms", value: "Bottoms" },
+              { label: "Dresses & Jumpsuits", value: "Dresses & Jumpsuits" },
+              { label: "Outerwear", value: "Outerwear" },
+              { label: "Activewear", value: "Activewear" },
+              {
+                label: "Sleepwear & Loungewear",
+                value: "Sleepwear & Loungewear",
+              },
+
+              { label: "— Footwear —", value: "" },
+              { label: "Sneakers", value: "Sneakers" },
+              { label: "Sandals", value: "Sandals" },
+              { label: "Boots", value: "Boots" },
+              { label: "Heels", value: "Heels" },
+              { label: "Flats", value: "Flats" },
+
+              { label: "— Accessories —", value: "" },
+              { label: "Bags & Wallets", value: "Bags & Wallets" },
+              { label: "Belts", value: "Belts" },
+              { label: "Caps & Hats", value: "Caps & Hats" },
+              { label: "Jewelry", value: "Jewelry" },
+              { label: "Sunglasses", value: "Sunglasses" },
+              { label: "Scarves & Gloves", value: "Scarves & Gloves" },
+
+              {
+                label: "— Vintage & Collectibles —",
+                value: "",
+              },
+              { label: "Vintage Clothing", value: "Vintage Clothing" },
+              { label: "Vintage Accessories", value: "Vintage Accessories" },
+              { label: "Collectibles", value: "Collectibles" },
+              { label: "Retro", value: "Retro / Y2K" },
+            ]}
           />
         </div>
 

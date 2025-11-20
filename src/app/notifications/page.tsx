@@ -5,6 +5,7 @@ import { useEffect, useState } from "react";
 import { useAuth } from "@/contexts/AuthContext";
 import { Notification } from "@/lib/types";
 import Button from "@/components/Button";
+import Loading from "@/components/Loading";
 
 export default function NotificationsPage() {
   const { user, firebaseUser } = useAuth();
@@ -88,7 +89,7 @@ export default function NotificationsPage() {
   if (loading) {
     return (
       <div className="max-w-7xl mx-auto px-4 py-8">
-        <p>Loading notifications...</p>
+        <Loading />
       </div>
     );
   }

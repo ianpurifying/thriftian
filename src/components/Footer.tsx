@@ -1,13 +1,23 @@
+// src/components/Footer.tsx
+import Image from "next/image";
+
 export default function Footer() {
   return (
-    <footer className="bg-amber-900 text-cream mt-auto border-t-8 border-amber-950">
+    <footer className="bg-purple-700 text-white mt-auto border-t-8 border-purple-900">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
         <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
           <div>
-            <h3 className="font-rye text-2xl mb-4 text-amber-200">
-              About Thriftian
+            <h3 className="font-rye text-2xl mb-4 text-pink-200">
+              <Image
+                src="/logo.png"
+                alt="Thriftian Logo"
+                width={40}
+                height={40}
+                className="inline-block mr-2"
+              />
+              Thriftian
             </h3>
-            <p className="text-sm font-nunito leading-relaxed text-amber-100">
+            <p className="text-sm font-nunito leading-relaxed text-purple-100">
               Your trusted destination for pre-loved treasures and vintage finds
               since 2025
             </p>
