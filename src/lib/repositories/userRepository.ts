@@ -1,4 +1,4 @@
-// lib/repositories/userRepository.ts
+// src/lib/repositories/userRepository.ts
 import { adminDb } from "../firebase/adminApp";
 import { User, UserRole } from "../types";
 import { Timestamp, FieldValue } from "firebase-admin/firestore";

@@ -1,4 +1,4 @@
-// lib/validation/schemas.ts
+// src/lib/validation/schemas.ts
 import { z } from "zod";
 
 export const addressSchema = z.object({

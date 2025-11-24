@@ -1,4 +1,4 @@
-// lib/types/index.ts
+// src/lib/types/index.ts
 export type UserRole = "buyer" | "seller" | "admin";
 
 export interface Address {

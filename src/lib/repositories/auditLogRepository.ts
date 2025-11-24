@@ -1,4 +1,4 @@
-// lib/repositories/auditLogRepository.ts
+// src/lib/repositories/auditLogRepository.ts
 import { adminDb } from "../firebase/adminApp";
 import { AuditLog } from "../types";
 import { Timestamp } from "firebase-admin/firestore";

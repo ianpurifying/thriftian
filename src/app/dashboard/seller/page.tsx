@@ -4,7 +4,7 @@
 import { useEffect, useState, useMemo, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/contexts/AuthContext";
-import { Product, Order, Analytics } from "@/lib/types";
+import { Product, Order, Analytics, OrderStatus } from "@/lib/types";
 import Button from "@/components/Button";
 import Modal from "@/components/Modal";
 import Input from "@/components/Input";
@@ -51,6 +51,10 @@ export default function SellerDashboard() {
     new Set()
   );
   const [showBulkActions, setShowBulkActions] = useState(false);
+  const [showOrderDetailModal, setShowOrderDetailModal] = useState(false);
+  const [showCancelModal, setShowCancelModal] = useState(false);
+  const [cancelReason, setCancelReason] = useState("");
+  const [updatingOrderId, setUpdatingOrderId] = useState<string | null>(null);
 
   const generateTrackingNumber = (length = 12) => {
     const chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
@@ -215,7 +219,80 @@ export default function SellerDashboard() {
       console.error("Failed to add tracking:", error);
     }
   };
+  const handleUpdateOrderStatus = async (
+    orderId: string,
+    newStatus: OrderStatus
+  ) => {
+    if (!firebaseUser) return;
+    setUpdatingOrderId(orderId);
 
+    try {
+      const token = await firebaseUser.getIdToken();
+      const response = await fetch(`/api/orders/${orderId}/status`, {
+        method: "PATCH",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({ status: newStatus }),
+      });
+
+      if (response.ok) {
+        alert(`Order status updated to ${newStatus}`);
+        fetchData();
+      } else {
+        const error = await response.json();
+        alert(error.message || "Failed to update order status");
+      }
+    } catch (error) {
+      console.error("Failed to update order status:", error);
+      alert("Failed to update order status");
+    } finally {
+      setUpdatingOrderId(null);
+    }
+  };
+
+  const handleCancelOrder = async () => {
+    if (!firebaseUser || !selectedOrder) return;
+
+    if (!cancelReason.trim() || cancelReason.trim().length < 10) {
+      alert("Cancellation reason must be at least 10 characters");
+      return;
+    }
+
+    setUpdatingOrderId(selectedOrder.id);
+
+    try {
+      const token = await firebaseUser.getIdToken();
+      const response = await fetch(`/api/orders/${selectedOrder.id}/status`, {
+        method: "PATCH",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({
+          status: "cancelled",
+          reason: cancelReason,
+        }),
+      });
+
+      if (response.ok) {
+        alert("Order cancelled successfully");
+        setShowCancelModal(false);
+        setCancelReason("");
+        setSelectedOrder(null);
+        fetchData();
+      } else {
+        const error = await response.json();
+        alert(error.message || "Failed to cancel order");
+      }
+    } catch (error) {
+      console.error("Failed to cancel order:", error);
+      alert("Failed to cancel order");
+    } finally {
+      setUpdatingOrderId(null);
+    }
+  };
   const handleBulkDelete = async () => {
     if (!firebaseUser || selectedProducts.size === 0) return;
 
@@ -851,7 +928,6 @@ export default function SellerDashboard() {
             </div>
           )}
         </div>
-
         {/* Orders Section */}
         <div className="bg-white rounded-lg border border-gray-200 p-6">
           <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6">
@@ -921,6 +997,9 @@ export default function SellerDashboard() {
                     Customer
                   </th>
                   <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    Items
+                  </th>
+                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                     Amount
                   </th>
                   <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
@@ -938,16 +1017,24 @@ export default function SellerDashboard() {
                 {filteredOrders.map((order) => (
                   <tr key={order.id} className="hover:bg-gray-50">
                     <td className="px-4 py-4">
-                      <span className="font-mono text-sm text-gray-900">
+                      <button
+                        onClick={() => {
+                          setSelectedOrder(order);
+                          setShowOrderDetailModal(true);
+                        }}
+                        className="font-mono text-sm text-indigo-600 hover:underline"
+                      >
                         #{order.id.substring(0, 8)}
-                      </span>
+                      </button>
                     </td>
                     <td className="px-4 py-4 text-sm text-gray-900">
                       {new Date(order.createdAt).toLocaleDateString("en-US")}
                     </td>
-
                     <td className="px-4 py-4 text-sm text-gray-900">
                       {order.buyerName}
+                    </td>
+                    <td className="px-4 py-4 text-sm text-gray-600">
+                      {order.items.length}
                     </td>
                     <td className="px-4 py-4 text-sm font-medium text-gray-900">
                       ₱
@@ -962,6 +1049,8 @@ export default function SellerDashboard() {
                             ? "bg-green-100 text-green-800"
                             : order.status === "shipped"
                             ? "bg-blue-100 text-blue-800"
+                            : order.status === "confirmed"
+                            ? "bg-purple-100 text-purple-800"
                             : order.status === "cancelled"
                             ? "bg-red-100 text-red-800"
                             : "bg-yellow-100 text-yellow-800"
@@ -981,19 +1070,207 @@ export default function SellerDashboard() {
                       )}
                     </td>
                     <td className="px-4 py-4 text-right">
-                      {order.status === "pending" && !order.trackingNumber && (
-                        <Button
-                          variant="secondary"
-                          onClick={() => {
-                            setSelectedOrder(order);
-                            setTrackingNumber(generateTrackingNumber());
-                            setShowTrackingModal(true);
+                      <div className="relative inline-block group">
+                        <button
+                          onClick={(
+                            event: React.MouseEvent<HTMLButtonElement>
+                          ) => {
+                            const btn = event.currentTarget; // safest way in React
+                            const menu =
+                              btn.nextElementSibling as HTMLElement | null;
+
+                            if (menu) {
+                              menu.classList.toggle("hidden");
+                            }
                           }}
-                          className="text-sm"
+                          className="inline-flex items-center gap-1 px-3 py-1.5 text-sm font-medium text-gray-700 bg-gray-100 hover:bg-gray-200 rounded-lg transition-colors disabled:opacity-50"
+                          disabled={updatingOrderId === order.id}
                         >
-                          Add Tracking
-                        </Button>
-                      )}
+                          Actions
+                          <svg
+                            className="w-4 h-4"
+                            fill="none"
+                            stroke="currentColor"
+                            viewBox="0 0 24 24"
+                          >
+                            <path
+                              strokeLinecap="round"
+                              strokeLinejoin="round"
+                              strokeWidth={2}
+                              d="M19 14l-7 7m0 0l-7-7m7 7V3"
+                            />
+                          </svg>
+                        </button>
+
+                        <div className="hidden absolute right-0 mt-1 w-48 bg-white border border-gray-200 rounded-lg shadow-lg z-10">
+                          <button
+                            onClick={() => {
+                              setSelectedOrder(order);
+                              setShowOrderDetailModal(true);
+                            }}
+                            className="w-full text-left px-4 py-2.5 text-sm font-medium text-gray-700 hover:bg-gray-50 transition-colors flex items-center gap-2 border-b border-gray-100"
+                          >
+                            <svg
+                              className="w-4 h-4"
+                              fill="none"
+                              stroke="currentColor"
+                              viewBox="0 0 24 24"
+                            >
+                              <path
+                                strokeLinecap="round"
+                                strokeLinejoin="round"
+                                strokeWidth={2}
+                                d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"
+                              />
+                              <path
+                                strokeLinecap="round"
+                                strokeLinejoin="round"
+                                strokeWidth={2}
+                                d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"
+                              />
+                            </svg>
+                            View Details
+                          </button>
+
+                          {/* Conditional actions based on status */}
+                          {order.status === "pending" &&
+                            !order.trackingNumber && (
+                              <button
+                                onClick={() => {
+                                  setSelectedOrder(order);
+                                  setTrackingNumber(generateTrackingNumber());
+                                  setShowTrackingModal(true);
+                                }}
+                                className="w-full text-left px-4 py-2.5 text-sm font-medium text-indigo-600 hover:bg-gray-50 transition-colors flex items-center gap-2 border-b border-gray-100"
+                                disabled={updatingOrderId === order.id}
+                              >
+                                <svg
+                                  className="w-4 h-4"
+                                  fill="none"
+                                  stroke="currentColor"
+                                  viewBox="0 0 24 24"
+                                >
+                                  <path
+                                    strokeLinecap="round"
+                                    strokeLinejoin="round"
+                                    strokeWidth={2}
+                                    d="M13 10V3L4 14h7v7l9-11h-7z"
+                                  />
+                                </svg>
+                                Add Tracking
+                              </button>
+                            )}
+
+                          {order.status === "pending" &&
+                            order.trackingNumber && (
+                              <button
+                                onClick={() =>
+                                  handleUpdateOrderStatus(order.id, "confirmed")
+                                }
+                                className="w-full text-left px-4 py-2.5 text-sm font-medium text-blue-600 hover:bg-gray-50 transition-colors flex items-center gap-2 border-b border-gray-100"
+                                disabled={updatingOrderId === order.id}
+                              >
+                                <svg
+                                  className="w-4 h-4"
+                                  fill="none"
+                                  stroke="currentColor"
+                                  viewBox="0 0 24 24"
+                                >
+                                  <path
+                                    strokeLinecap="round"
+                                    strokeLinejoin="round"
+                                    strokeWidth={2}
+                                    d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"
+                                  />
+                                </svg>
+                                {updatingOrderId === order.id
+                                  ? "Confirming..."
+                                  : "Confirm"}
+                              </button>
+                            )}
+
+                          {order.status === "confirmed" && (
+                            <button
+                              onClick={() =>
+                                handleUpdateOrderStatus(order.id, "shipped")
+                              }
+                              className="w-full text-left px-4 py-2.5 text-sm font-medium text-purple-600 hover:bg-gray-50 transition-colors flex items-center gap-2 border-b border-gray-100"
+                              disabled={updatingOrderId === order.id}
+                            >
+                              <svg
+                                className="w-4 h-4"
+                                fill="none"
+                                stroke="currentColor"
+                                viewBox="0 0 24 24"
+                              >
+                                <path
+                                  strokeLinecap="round"
+                                  strokeLinejoin="round"
+                                  strokeWidth={2}
+                                  d="M5 8h14M5 8a2 2 0 110-4h14a2 2 0 110 4M5 8v10a2 2 0 002 2h10a2 2 0 002-2V8m-9-4v4m0 0v4"
+                                />
+                              </svg>
+                              {updatingOrderId === order.id
+                                ? "Updating..."
+                                : "Mark Shipped"}
+                            </button>
+                          )}
+
+                          {order.status === "shipped" && (
+                            <button
+                              onClick={() =>
+                                handleUpdateOrderStatus(order.id, "delivered")
+                              }
+                              className="w-full text-left px-4 py-2.5 text-sm font-medium text-green-600 hover:bg-gray-50 transition-colors flex items-center gap-2 border-b border-gray-100"
+                              disabled={updatingOrderId === order.id}
+                            >
+                              <svg
+                                className="w-4 h-4"
+                                fill="none"
+                                stroke="currentColor"
+                                viewBox="0 0 24 24"
+                              >
+                                <path
+                                  strokeLinecap="round"
+                                  strokeLinejoin="round"
+                                  strokeWidth={2}
+                                  d="M5 13l4 4L19 7"
+                                />
+                              </svg>
+                              {updatingOrderId === order.id
+                                ? "Updating..."
+                                : "Mark Delivered"}
+                            </button>
+                          )}
+
+                          {order.status !== "delivered" &&
+                            order.status !== "cancelled" && (
+                              <button
+                                onClick={() => {
+                                  setSelectedOrder(order);
+                                  setShowCancelModal(true);
+                                }}
+                                className="w-full text-left px-4 py-2.5 text-sm font-medium text-red-600 hover:bg-gray-50 transition-colors flex items-center gap-2"
+                                disabled={updatingOrderId === order.id}
+                              >
+                                <svg
+                                  className="w-4 h-4"
+                                  fill="none"
+                                  stroke="currentColor"
+                                  viewBox="0 0 24 24"
+                                >
+                                  <path
+                                    strokeLinecap="round"
+                                    strokeLinejoin="round"
+                                    strokeWidth={2}
+                                    d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"
+                                  />
+                                </svg>
+                                Cancel Order
+                              </button>
+                            )}
+                        </div>
+                      </div>
                     </td>
                   </tr>
                 ))}
@@ -1027,6 +1304,187 @@ export default function SellerDashboard() {
             </div>
           )}
         </div>
+
+        {/* Order Detail Modal */}
+        <Modal
+          isOpen={showOrderDetailModal}
+          onClose={() => {
+            setShowOrderDetailModal(false);
+            setSelectedOrder(null);
+          }}
+          title="Order Details"
+        >
+          {selectedOrder && (
+            <div className="space-y-4">
+              <div className="bg-gray-50 rounded-lg p-4">
+                <div className="grid grid-cols-2 gap-4 text-sm">
+                  <div>
+                    <p className="text-gray-600">Order ID</p>
+                    <p className="font-mono font-medium text-gray-900">
+                      #{selectedOrder.id.substring(0, 8)}
+                    </p>
+                  </div>
+                  <div>
+                    <p className="text-gray-600">Status</p>
+                    <span
+                      className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
+                        selectedOrder.status === "delivered"
+                          ? "bg-green-100 text-green-800"
+                          : selectedOrder.status === "shipped"
+                          ? "bg-blue-100 text-blue-800"
+                          : selectedOrder.status === "confirmed"
+                          ? "bg-purple-100 text-purple-800"
+                          : selectedOrder.status === "cancelled"
+                          ? "bg-red-100 text-red-800"
+                          : "bg-yellow-100 text-yellow-800"
+                      }`}
+                    >
+                      {selectedOrder.status.charAt(0).toUpperCase() +
+                        selectedOrder.status.slice(1)}
+                    </span>
+                  </div>
+                  <div>
+                    <p className="text-gray-600">Customer</p>
+                    <p className="font-medium text-gray-900">
+                      {selectedOrder.buyerName}
+                    </p>
+                  </div>
+                  <div>
+                    <p className="text-gray-600">Total Amount</p>
+                    <p className="font-semibold text-gray-900">
+                      ₱
+                      {selectedOrder.totalAmount.toLocaleString("en-PH", {
+                        minimumFractionDigits: 2,
+                      })}
+                    </p>
+                  </div>
+                </div>
+              </div>
+
+              <div>
+                <h4 className="font-medium text-gray-900 mb-2">
+                  Shipping Address
+                </h4>
+                <div className="bg-gray-50 rounded-lg p-3 text-sm text-gray-700">
+                  <p>{selectedOrder.shippingAddress.street}</p>
+                  <p>
+                    {selectedOrder.shippingAddress.city},{" "}
+                    {selectedOrder.shippingAddress.province}{" "}
+                    {selectedOrder.shippingAddress.zip}
+                  </p>
+                </div>
+              </div>
+
+              <div>
+                <h4 className="font-medium text-gray-900 mb-2">Order Items</h4>
+                <div className="space-y-2">
+                  {selectedOrder.items.map((item, idx) => (
+                    <div
+                      key={idx}
+                      className="flex items-center gap-3 bg-gray-50 rounded-lg p-3"
+                    >
+                      <img
+                        src={item.imageUrl}
+                        alt={item.title}
+                        className="w-12 h-12 object-cover rounded"
+                      />
+                      <div className="flex-1">
+                        <p className="font-medium text-sm text-gray-900">
+                          {item.title}
+                        </p>
+                        <p className="text-xs text-gray-600">
+                          ₱{item.price.toFixed(2)} × {item.quantity}
+                        </p>
+                      </div>
+                      <p className="font-semibold text-sm text-gray-900">
+                        ₱{(item.price * item.quantity).toFixed(2)}
+                      </p>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              <div className="flex gap-3 pt-4 border-t">
+                <Button
+                  onClick={() => setShowOrderDetailModal(false)}
+                  className="flex-1"
+                  variant="secondary"
+                >
+                  Close
+                </Button>
+              </div>
+            </div>
+          )}
+        </Modal>
+
+        {/* Cancel Order Modal */}
+        <Modal
+          isOpen={showCancelModal}
+          onClose={() => {
+            setShowCancelModal(false);
+            setCancelReason("");
+            setSelectedOrder(null);
+          }}
+          title="Cancel Order"
+        >
+          {selectedOrder && (
+            <div className="space-y-4">
+              <div className="bg-red-50 border border-red-200 rounded-lg p-4">
+                <p className="text-sm text-red-800 mb-2">
+                  Are you sure you want to cancel order{" "}
+                  <span className="font-mono font-semibold">
+                    #{selectedOrder.id.substring(0, 8)}
+                  </span>
+                  ?
+                </p>
+                <p className="text-xs text-red-700">
+                  This action cannot be undone. Please provide a reason for
+                  cancellation.
+                </p>
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Cancellation Reason
+                </label>
+                <textarea
+                  value={cancelReason}
+                  onChange={(e) => setCancelReason(e.target.value)}
+                  placeholder="Enter reason for cancellation (minimum 10 characters)..."
+                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 resize-none"
+                  rows={4}
+                />
+                <p className="text-xs text-gray-500 mt-1">
+                  {cancelReason.length}/10 characters minimum
+                </p>
+              </div>
+
+              <div className="flex gap-3 pt-4">
+                <Button
+                  onClick={handleCancelOrder}
+                  className="flex-1 bg-red-600 hover:bg-red-700"
+                  disabled={updatingOrderId === selectedOrder.id}
+                >
+                  {updatingOrderId === selectedOrder.id
+                    ? "Cancelling..."
+                    : "Confirm Cancellation"}
+                </Button>
+                <Button
+                  variant="secondary"
+                  onClick={() => {
+                    setShowCancelModal(false);
+                    setCancelReason("");
+                    setSelectedOrder(null);
+                  }}
+                  className="flex-1"
+                  disabled={updatingOrderId === selectedOrder.id}
+                >
+                  Go Back
+                </Button>
+              </div>
+            </div>
+          )}
+        </Modal>
       </div>
 
       {/* Tracking Modal */}

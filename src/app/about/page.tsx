@@ -151,6 +151,45 @@ export default function AboutPage() {
           </div>
         </section>
 
+        {/* Our Story Section */}
+        <section className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-16">
+          <div className="bg-gradient-to-br from-purple-50 via-pink-50 to-amber-50 rounded-2xl shadow-xl p-8 md:p-12 border-l-4 border-purple-500">
+            <h2 className="text-3xl md:text-4xl font-bold text-purple-700 mb-6 text-center">
+              Our Story
+            </h2>
+            <div className="prose prose-lg max-w-4xl mx-auto text-gray-700 leading-relaxed space-y-4">
+              <p>
+                Thriftian began as a project by three computer science students
+                who shared a vision: to transform the fragmented world of online
+                thrift shopping into something meaningful and accessible for
+                everyone.
+              </p>
+              <p>
+                Walking through local thrift stores and scrolling through
+                countless social media shops, we noticed a pattern. Talented
+                sellers were struggling to reach customers, buyers were
+                overwhelmed by disorganized listings, and sustainable fashion
+                was harder to access than it should be. We knew technology could
+                bridge this gap.
+              </p>
+              <p>
+                What started as late-night brainstorming sessions and countless
+                cups of coffee evolved into a full-fledged platform. We combined
+                our skills in design, development, and quality assurance to
+                create something we are truly proud of—a marketplace that not
+                only connects people but also champions sustainability and
+                empowers small businesses.
+              </p>
+              <p className="font-semibold text-purple-800">
+                Thriftian is more than just our project. It is our commitment to
+                making sustainable fashion accessible, supporting local sellers,
+                and proving that students can create real solutions to real
+                problems.
+              </p>
+            </div>
+          </div>
+        </section>
+
         {/* Background & Significance */}
         <section className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-16">
           <h2 className="text-4xl font-bold text-purple-700 mb-8 text-center">
