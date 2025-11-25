@@ -1,8 +1,7 @@
-// app/api/users/[userId]/route.ts
+// src/app/api/users/[userId]/route.ts
 import { NextRequest, NextResponse } from "next/server";
 import { requireAuth } from "@/lib/middleware/auth";
 import { userRepository } from "@/lib/repositories/userRepository";
-import { userSchema } from "@/lib/validation/schemas";
 
 export async function GET(
   req: NextRequest,
@@ -17,28 +16,20 @@ export async function GET(
   }
 
   try {
-    const user = await userRepository.findById(params.userId);
+    const { userId } = params;
+    const user = await userRepository.findById(userId);
+
     if (!user) {
       return NextResponse.json({ error: "User not found" }, { status: 404 });
     }
 
-    // Only allow users to view their own data or admins to view any
-    if (
-      authResult.user.uid !== params.userId &&
-      authResult.user.role !== "admin"
-    ) {
-      return NextResponse.json({ error: "Forbidden" }, { status: 403 });
-    }
-
     return NextResponse.json({ user });
-  } catch (error: unknown) {
-    let message = "Error";
-
-    if (error instanceof Error) {
-      message = error.message;
-    }
-
-    return NextResponse.json({ error: message }, { status: 500 });
+  } catch (error) {
+    console.error("Get user error:", error);
+    return NextResponse.json(
+      { error: "Failed to fetch user" },
+      { status: 500 }
+    );
   }
 }
 
@@ -54,33 +45,30 @@ export async function PATCH(
     );
   }
 
-  // Only allow users to update their own data
-  if (authResult.user.uid !== params.userId) {
-    return NextResponse.json({ error: "Forbidden" }, { status: 403 });
-  }
-
   try {
+    const { userId } = params;
+
+    // Only allow users to update their own account
+    if (authResult.user.uid !== userId) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 403 });
+    }
+
     const body = await req.json();
-    const validation = userSchema.partial().safeParse(body);
+    console.log("Updating user:", userId, body);
 
-    if (!validation.success) {
-      return NextResponse.json(
-        { error: validation.error.errors },
-        { status: 400 }
-      );
-    }
+    await userRepository.update(userId, body);
 
-    await userRepository.update(params.userId, validation.data);
-    const updatedUser = await userRepository.findById(params.userId);
+    const updatedUser = await userRepository.findById(userId);
 
-    return NextResponse.json({ user: updatedUser });
-  } catch (error: unknown) {
-    let message = "Error";
-
-    if (error instanceof Error) {
-      message = error.message;
-    }
-
-    return NextResponse.json({ error: message }, { status: 500 });
+    return NextResponse.json({
+      success: true,
+      user: updatedUser,
+    });
+  } catch (error) {
+    console.error("Update user error:", error);
+    return NextResponse.json(
+      { error: "Failed to update user" },
+      { status: 500 }
+    );
   }
 }

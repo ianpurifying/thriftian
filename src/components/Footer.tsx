@@ -38,7 +38,7 @@ export default function Footer() {
               </li>
               <li>
                 <a
-                  href="/terms"
+                  href="/terms&condition"
                   className="hover:text-amber-300 transition-colors"
                 >
                   → Terms & Conditions

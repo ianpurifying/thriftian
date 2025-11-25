@@ -29,6 +29,7 @@ interface AuthContextType {
   signInWithGoogle: () => Promise<void>;
   signOut: () => Promise<void>;
   refreshUser: () => Promise<void>;
+  resendVerificationEmail: () => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -58,23 +59,25 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   const syncVerificationStatus = async (firebaseUser: FirebaseUser) => {
     try {
-      // Reload user to get latest emailVerified status
+      // Force reload to get latest emailVerified status from Firebase
       await firebaseUser.reload();
-      const isVerified = firebaseUser.emailVerified;
+      const isVerifiedInAuth = firebaseUser.emailVerified;
 
-      const token = await firebaseUser.getIdToken();
+      const token = await firebaseUser.getIdToken(true); // Force refresh token
 
-      // Check if Firestore verification status matches
+      // Fetch current Firestore user data
       const userResponse = await fetch(`/api/users/${firebaseUser.uid}`, {
         headers: { Authorization: `Bearer ${token}` },
       });
 
       if (userResponse.ok) {
-        const { user } = await userResponse.json();
+        const { user: firestoreUser } = await userResponse.json();
 
-        // If Firebase Auth shows verified but Firestore doesn't, update it
-        if (isVerified && !user.verified) {
-          await fetch(`/api/users/${firebaseUser.uid}`, {
+        // If Firebase Auth shows verified but Firestore doesn't, update Firestore
+        if (isVerifiedInAuth && !firestoreUser.verified) {
+          console.log("Syncing verification status to Firestore...");
+
+          const updateResponse = await fetch(`/api/users/${firebaseUser.uid}`, {
             method: "PATCH",
             headers: {
               "Content-Type": "application/json",
@@ -83,8 +86,13 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
             body: JSON.stringify({ verified: true }),
           });
 
-          // Refresh user data
-          await fetchUserData(firebaseUser.uid);
+          if (updateResponse.ok) {
+            // Refresh user data to reflect changes
+            await fetchUserData(firebaseUser.uid);
+          }
+        } else {
+          // Just set the existing user data
+          setUser(firestoreUser);
         }
       }
     } catch (error) {
@@ -112,9 +120,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         const idToken = await firebaseUser.getIdToken();
         await createSession(idToken);
 
-        // Sync verification status before fetching user data
+        // Sync verification status on every auth state change
         await syncVerificationStatus(firebaseUser);
-        await fetchUserData(firebaseUser.uid);
       } else {
         setUser(null);
         await fetch("/api/auth/session", { method: "DELETE" });
@@ -125,6 +132,20 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
     return unsubscribe;
   }, []);
+
+  // Periodically check verification status for unverified users
+  useEffect(() => {
+    if (!firebaseUser || user?.verified) return;
+
+    const intervalId = setInterval(async () => {
+      await firebaseUser.reload();
+      if (firebaseUser.emailVerified) {
+        await syncVerificationStatus(firebaseUser);
+      }
+    }, 10000); // Check every 10 seconds
+
+    return () => clearInterval(intervalId);
+  }, [firebaseUser, user?.verified]);
 
   const signIn = async (email: string, password: string) => {
     await signInWithEmailAndPassword(auth, email, password);
@@ -142,8 +163,16 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       password
     );
 
+    // Configure action code settings for verification email
+    const actionCodeSettings = {
+      url: `${
+        process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000"
+      }/verify-email`,
+      handleCodeInApp: true,
+    };
+
     // Send verification email
-    await sendEmailVerification(userCredential.user);
+    await sendEmailVerification(userCredential.user, actionCodeSettings);
 
     // Create user document with selected role
     const token = await userCredential.user.getIdToken();
@@ -202,6 +231,21 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
   };
 
+  const resendVerificationEmail = async () => {
+    if (!firebaseUser) {
+      throw new Error("No user logged in");
+    }
+
+    const actionCodeSettings = {
+      url: `${
+        process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000"
+      }/verify-email`,
+      handleCodeInApp: true,
+    };
+
+    await sendEmailVerification(firebaseUser, actionCodeSettings);
+  };
+
   return (
     <AuthContext.Provider
       value={{
@@ -213,6 +257,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         signInWithGoogle,
         signOut,
         refreshUser,
+        resendVerificationEmail,
       }}
     >
       {children}

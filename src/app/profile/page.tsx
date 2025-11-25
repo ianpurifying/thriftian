@@ -1,3 +1,4 @@
+// src/app/profile/page.tsx
 "use client";
 
 import React, { useState, useEffect } from "react";
@@ -12,7 +13,11 @@ import {
   Save,
   X,
   Edit2,
+  AlertCircle,
+  CheckCircle,
+  Send,
 } from "lucide-react";
+import { useAuth } from "@/contexts/AuthContext";
 
 // Types matching your codebase
 interface Address {
@@ -36,6 +41,7 @@ interface UserProfile {
 }
 
 const UserProfilePage = () => {
+  const { user: authUser, refreshUser, resendVerificationEmail } = useAuth();
   const [user, setUser] = useState<UserProfile | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -43,18 +49,39 @@ const UserProfilePage = () => {
   const [saving, setSaving] = useState(false);
   const [editedUser, setEditedUser] = useState<Partial<UserProfile>>({});
   const [uploadingPhoto, setUploadingPhoto] = useState(false);
+  const [resendingEmail, setResendingEmail] = useState(false);
+  const [resendSuccess, setResendSuccess] = useState(false);
 
   // Fetch user data on mount
   useEffect(() => {
     fetchUserProfile();
   }, []);
 
+  // Sync with auth context user
+  useEffect(() => {
+    if (authUser) {
+      const userProfile: UserProfile = {
+        ...authUser,
+        createdAt:
+          authUser.createdAt instanceof Date
+            ? authUser.createdAt
+            : new Date(authUser.createdAt),
+        updatedAt:
+          authUser.updatedAt instanceof Date
+            ? authUser.updatedAt
+            : new Date(authUser.updatedAt),
+      } as UserProfile;
+
+      setUser(userProfile);
+      setEditedUser(userProfile);
+    }
+  }, [authUser]);
+
   const fetchUserProfile = async () => {
     try {
       setLoading(true);
       setError(null);
 
-      // Get Firebase auth token
       const auth = (await import("firebase/auth")).getAuth();
       const currentUser = auth.currentUser;
 
@@ -77,10 +104,14 @@ const UserProfilePage = () => {
       }
 
       const data = await response.json();
-      const userData = {
+      const userData: UserProfile = {
         ...data.user,
-        createdAt: new Date(data.user.createdAt),
-        updatedAt: new Date(data.user.updatedAt),
+        createdAt: data.user.createdAt
+          ? new Date(data.user.createdAt)
+          : new Date(),
+        updatedAt: data.user.updatedAt
+          ? new Date(data.user.updatedAt)
+          : new Date(),
       };
 
       setUser(userData);
@@ -89,6 +120,38 @@ const UserProfilePage = () => {
       setError(err instanceof Error ? err.message : "An error occurred");
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleResendVerification = async () => {
+    try {
+      setResendingEmail(true);
+      setError(null);
+      setResendSuccess(false);
+
+      await resendVerificationEmail();
+
+      setResendSuccess(true);
+      setTimeout(() => setResendSuccess(false), 5000);
+    } catch (err) {
+      setError(
+        err instanceof Error ? err.message : "Failed to send verification email"
+      );
+    } finally {
+      setResendingEmail(false);
+    }
+  };
+
+  const handleRefreshVerification = async () => {
+    try {
+      await refreshUser();
+      await fetchUserProfile();
+    } catch (err) {
+      setError(
+        err instanceof Error
+          ? err.message
+          : "Failed to refresh verification status"
+      );
     }
   };
 
@@ -126,10 +189,14 @@ const UserProfilePage = () => {
       }
 
       const data = await response.json();
-      const updatedUserData = {
+      const updatedUserData: UserProfile = {
         ...data.user,
-        createdAt: new Date(data.user.createdAt),
-        updatedAt: new Date(data.user.updatedAt),
+        createdAt: data.user.createdAt
+          ? new Date(data.user.createdAt)
+          : new Date(),
+        updatedAt: data.user.updatedAt
+          ? new Date(data.user.updatedAt)
+          : new Date(),
       };
 
       setUser(updatedUserData);
@@ -152,7 +219,6 @@ const UserProfilePage = () => {
     const file = e.target.files?.[0];
     if (!file || !user) return;
 
-    // Validate file
     if (!file.type.startsWith("image/")) {
       setError("Please select an image file");
       return;
@@ -167,8 +233,6 @@ const UserProfilePage = () => {
       setUploadingPhoto(true);
       setError(null);
 
-      // Here you would implement actual image upload to your storage service
-      // For now, we'll create a local preview
       const reader = new FileReader();
       reader.onloadend = () => {
         setEditedUser({ ...editedUser, photoURL: reader.result as string });
@@ -181,12 +245,25 @@ const UserProfilePage = () => {
     }
   };
 
-  const formatDate = (date: Date) => {
-    return new Intl.DateTimeFormat("en-US", {
-      year: "numeric",
-      month: "long",
-      day: "numeric",
-    }).format(date);
+  const formatDate = (date: Date | string | undefined) => {
+    if (!date) return "N/A";
+
+    try {
+      const dateObj = date instanceof Date ? date : new Date(date);
+
+      // Check if date is valid
+      if (isNaN(dateObj.getTime())) {
+        return "N/A";
+      }
+
+      return new Intl.DateTimeFormat("en-US", {
+        year: "numeric",
+        month: "long",
+        day: "numeric",
+      }).format(dateObj);
+    } catch {
+      return "N/A";
+    }
   };
 
   const getRoleBadgeColor = (role: string) => {
@@ -238,6 +315,56 @@ const UserProfilePage = () => {
   return (
     <div className="min-h-screen bg-gray-50 py-8 px-4 sm:px-6 lg:px-8">
       <div className="max-w-4xl mx-auto">
+        {/* Verification Alert */}
+        {!user.verified && (
+          <div className="bg-amber-50 border-l-4 border-amber-500 p-4 mb-6 rounded-lg">
+            <div className="flex items-start">
+              <AlertCircle className="w-5 h-5 text-amber-500 mt-0.5 mr-3" />
+              <div className="flex-1">
+                <h3 className="text-sm font-semibold text-amber-800 mb-1">
+                  Email Verification Required
+                </h3>
+                <p className="text-sm text-amber-700 mb-3">
+                  Please verify your email address to access all features. Check
+                  your inbox for the verification link.
+                </p>
+                <div className="flex flex-wrap gap-2">
+                  <button
+                    onClick={handleResendVerification}
+                    disabled={resendingEmail}
+                    className="inline-flex items-center gap-2 px-4 py-2 bg-amber-600 text-white text-sm rounded-lg hover:bg-amber-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                  >
+                    <Send className="w-4 h-4" />
+                    {resendingEmail
+                      ? "Sending..."
+                      : "Resend Verification Email"}
+                  </button>
+                  <button
+                    onClick={handleRefreshVerification}
+                    className="inline-flex items-center gap-2 px-4 py-2 bg-white text-amber-700 text-sm border border-amber-300 rounded-lg hover:bg-amber-50 transition-colors"
+                  >
+                    I have Verified My Email
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Success Message */}
+        {resendSuccess && (
+          <div className="bg-green-50 border-l-4 border-green-500 p-4 mb-6 rounded-lg">
+            <div className="flex items-start">
+              <CheckCircle className="w-5 h-5 text-green-500 mt-0.5 mr-3" />
+              <div>
+                <p className="text-sm text-green-700">
+                  Verification email sent successfully! Please check your inbox.
+                </p>
+              </div>
+            </div>
+          </div>
+        )}
+
         {/* Header */}
         <div className="bg-white rounded-lg shadow-md overflow-hidden mb-6">
           <div className="h-32 bg-gradient-to-r from-blue-500 to-blue-600"></div>
