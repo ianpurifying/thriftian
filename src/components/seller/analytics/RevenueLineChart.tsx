@@ -22,14 +22,16 @@ export default function RevenueLineChart({ salesData }: RevenueLineChartProps) {
   }
 
   const maxAmount = Math.max(...salesData.map((d) => d.amount), 1);
-  const minAmount = Math.min(...salesData.map((d) => d.amount), 0);
-  const range = maxAmount - minAmount || 1;
+  const totalRevenue = salesData.reduce((sum, d) => sum + d.amount, 0);
+  const daysWithRevenue = salesData.filter((d) => d.amount > 0).length;
+  const avgDailyRevenue =
+    daysWithRevenue > 0 ? totalRevenue / daysWithRevenue : 0;
 
-  // Create SVG path for line chart
+  // Create SVG path for line chart - connects only non-zero points
   const createPath = () => {
     const points = salesData.map((d, i) => {
       const x = (i / (salesData.length - 1)) * 100;
-      const y = 100 - ((d.amount - minAmount) / range) * 90;
+      const y = 100 - (d.amount / maxAmount) * 85 - 5; // 5% padding at top
       return `${x},${y}`;
     });
     return points.join(" ");
@@ -39,14 +41,11 @@ export default function RevenueLineChart({ salesData }: RevenueLineChartProps) {
   const createAreaPath = () => {
     const points = salesData.map((d, i) => {
       const x = (i / (salesData.length - 1)) * 100;
-      const y = 100 - ((d.amount - minAmount) / range) * 90;
+      const y = 100 - (d.amount / maxAmount) * 85 - 5;
       return `${x},${y}`;
     });
     return `0,100 ${points.join(" ")} 100,100`;
   };
-
-  const totalRevenue = salesData.reduce((sum, d) => sum + d.amount, 0);
-  const avgDailyRevenue = totalRevenue / salesData.length;
 
   return (
     <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6 animate-[fadeIn_0.6s_ease-out]">
@@ -61,6 +60,10 @@ export default function RevenueLineChart({ salesData }: RevenueLineChartProps) {
         </div>
         <div className="text-right">
           <p className="text-sm text-gray-600">Avg Daily Revenue</p>
+          <p className="text-xs text-gray-400 mb-1">
+            ({daysWithRevenue} {daysWithRevenue === 1 ? "day" : "days"} with
+            sales)
+          </p>
           <p className="text-2xl font-bold text-indigo-600">
             ₱
             {avgDailyRevenue.toLocaleString("en-PH", {
@@ -120,24 +123,30 @@ export default function RevenueLineChart({ salesData }: RevenueLineChartProps) {
             className="animate-[draw_1.5s_ease-out]"
           />
 
-          {/* Data points */}
+          {/* Data points - highlight only days with revenue */}
           {salesData.map((d, i) => {
             const x = (i / (salesData.length - 1)) * 100;
-            const y = 100 - ((d.amount - minAmount) / range) * 90;
+            const y = 100 - (d.amount / maxAmount) * 85 - 5;
+
+            if (d.amount === 0) return null;
+
             return (
               <g key={i}>
                 <circle
                   cx={x}
                   cy={y}
-                  r="0.8"
+                  r="1.2"
                   fill="#6366f1"
-                  className="hover:r-1.5 transition-all cursor-pointer"
+                  stroke="#fff"
+                  strokeWidth="0.3"
+                  className="hover:r-2 transition-all cursor-pointer"
                 />
                 <title>
                   {new Date(d.date).toLocaleDateString()}: ₱
                   {d.amount.toLocaleString("en-PH", {
                     minimumFractionDigits: 2,
-                  })}
+                  })}{" "}
+                  ({d.orders} {d.orders === 1 ? "order" : "orders"})
                 </title>
               </g>
             );
@@ -190,6 +199,29 @@ export default function RevenueLineChart({ salesData }: RevenueLineChartProps) {
             { month: "short", day: "numeric" }
           )}
         </span>
+      </div>
+
+      {/* Revenue summary */}
+      <div className="mt-6 pt-6 border-t border-gray-200 grid grid-cols-3 gap-4 text-center">
+        <div>
+          <p className="text-xs text-gray-500 mb-1">Total Revenue</p>
+          <p className="text-lg font-bold text-gray-900">
+            ₱
+            {totalRevenue.toLocaleString("en-PH", { maximumFractionDigits: 0 })}
+          </p>
+        </div>
+        <div>
+          <p className="text-xs text-gray-500 mb-1">Days with Sales</p>
+          <p className="text-lg font-bold text-gray-900">
+            {daysWithRevenue} / 30
+          </p>
+        </div>
+        <div>
+          <p className="text-xs text-gray-500 mb-1">Peak Day</p>
+          <p className="text-lg font-bold text-gray-900">
+            ₱{maxAmount.toLocaleString("en-PH", { maximumFractionDigits: 0 })}
+          </p>
+        </div>
       </div>
     </div>
   );

@@ -2,6 +2,8 @@
 "use client";
 
 import Image from "next/image";
+import ContactForm from "@/components/ContactForm";
+import { FacebookIcon, InstagramIcon } from "lucide-react";
 
 export default function AboutPage() {
   const teamMembers = [
@@ -346,7 +348,7 @@ export default function AboutPage() {
                       href="mailto:sacredmind2002@gmail.com"
                       className="text-purple-600 hover:text-purple-800"
                     >
-                      support@thriftian.online
+                      sacredmind2002@gmail.com
                     </a>
                   </div>
                 </div>
@@ -354,7 +356,7 @@ export default function AboutPage() {
                   <span className="text-2xl mr-4">📱</span>
                   <div>
                     <p className="font-semibold text-gray-700">Phone</p>
-                    <p className="text-gray-600">+63 123 456 7890</p>
+                    <p className="text-gray-600">+63 991 692 5190</p>
                   </div>
                 </div>
                 <div className="flex items-start">
@@ -373,21 +375,18 @@ export default function AboutPage() {
                   <a
                     href="https://www.facebook.com/ianpurifying/"
                     target="_blank"
+                    rel="noopener noreferrer"
                     className="w-10 h-10 bg-purple-600 rounded-full flex items-center justify-center text-white hover:bg-purple-700 transition-colors"
                   >
-                    f
+                    <FacebookIcon className="w-5 h-5" />
                   </a>
                   <a
-                    href="#"
+                    href="https://www.instagram.com/ianpurifying/"
+                    target="_blank"
+                    rel="noopener noreferrer"
                     className="w-10 h-10 bg-pink-500 rounded-full flex items-center justify-center text-white hover:bg-pink-600 transition-colors"
                   >
-                    IG
-                  </a>
-                  <a
-                    href="#"
-                    className="w-10 h-10 bg-amber-500 rounded-full flex items-center justify-center text-white hover:bg-amber-600 transition-colors"
-                  >
-                    X
+                    <InstagramIcon className="w-5 h-5" />
                   </a>
                 </div>
               </div>
@@ -396,41 +395,7 @@ export default function AboutPage() {
               <h3 className="text-2xl font-bold text-gray-800 mb-6">
                 Send Us a Message
               </h3>
-              <div className="space-y-4">
-                <div>
-                  <label className="block text-gray-700 font-semibold mb-2">
-                    Name
-                  </label>
-                  <input
-                    type="text"
-                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500"
-                    placeholder="Your name"
-                  />
-                </div>
-                <div>
-                  <label className="block text-gray-700 font-semibold mb-2">
-                    Email
-                  </label>
-                  <input
-                    type="email"
-                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500"
-                    placeholder="your@email.com"
-                  />
-                </div>
-                <div>
-                  <label className="block text-gray-700 font-semibold mb-2">
-                    Message
-                  </label>
-                  <textarea
-                    rows={4}
-                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500"
-                    placeholder="How can we help you?"
-                  ></textarea>
-                </div>
-                <button className="w-full bg-gradient-to-r from-purple-600 to-pink-500 text-white font-bold py-3 rounded-lg hover:from-purple-700 hover:to-pink-600 transition-all duration-300 shadow-lg">
-                  Send Message
-                </button>
-              </div>
+              <ContactForm />
             </div>
           </div>
         </section>

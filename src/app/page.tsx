@@ -5,6 +5,7 @@ import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { Product } from "@/lib/types";
 import ProductCard from "@/components/ProductCard";
+import Image from "next/image";
 
 export default function HomePage() {
   const router = useRouter();
@@ -24,17 +25,58 @@ export default function HomePage() {
     {
       title: "Vintage Treasures",
       subtitle: "Curated pre-loved fashion finds",
-      bg: "bg-gradient-to-r from-amber-400 to-orange-500",
+      image: "/image1.jpg",
+      textColor: "text-white",
+      overlay: "bg-black/40",
     },
     {
       title: "₱99 Deals",
       subtitle: "Quality pieces under ₱100",
-      bg: "bg-gradient-to-r from-pink-400 to-rose-500",
+      image: "/image2.jpg",
+      textColor: "text-white",
+      overlay: "bg-gradient-to-t from-black/60 to-transparent",
     },
     {
       title: "Trending Fits",
       subtitle: "Most-loved items this week",
-      bg: "bg-gradient-to-r from-blue-400 to-indigo-500",
+      image: "/image3.jpg",
+      textColor: "text-white",
+      overlay: "bg-black/30",
+    },
+    {
+      title: "Fresh Arrivals",
+      subtitle: "New drops just for you",
+      image: "/image4.jpg",
+      textColor: "text-white",
+      overlay: "bg-gradient-to-r from-black/50 to-transparent",
+    },
+    {
+      title: "Designer Steals",
+      subtitle: "Luxury brands at thrift prices",
+      image: "/image5.jpg",
+      textColor: "text-white",
+      overlay: "bg-black/45",
+    },
+    {
+      title: "Weekend Vibes",
+      subtitle: "Casual comfort meets style",
+      image: "/image6.jpg",
+      textColor: "text-white",
+      overlay: "bg-gradient-to-t from-black/55 to-black/20",
+    },
+    {
+      title: "Statement Pieces",
+      subtitle: "Stand out from the crowd",
+      image: "/image7.jpg",
+      textColor: "text-white",
+      overlay: "bg-black/35",
+    },
+    {
+      title: "Seasonal Favorites",
+      subtitle: "Perfect picks for right now",
+      image: "/image8.jpg",
+      textColor: "text-white",
+      overlay: "bg-gradient-to-br from-black/50 via-black/30 to-transparent",
     },
   ];
 
@@ -162,33 +204,45 @@ export default function HomePage() {
 
   return (
     <div className="min-h-screen bg-gray-50">
-      <div className="relative overflow-hidden">
-        {banners.map((banner, index) => (
-          <div
-            key={index}
-            className={`absolute inset-0 transition-opacity duration-1000 ${
-              currentBanner === index ? "opacity-100" : "opacity-0"
-            } ${banner.bg}`}
-            style={{ zIndex: currentBanner === index ? 1 : 0 }}
-          >
-            <div className="max-w-7xl mx-auto px-4 py-16 md:py-24">
-              <h2 className="text-4xl md:text-6xl font-bold text-white mb-2 drop-shadow-lg">
-                {banner.title}
-              </h2>
-              <p className="text-xl md:text-2xl text-white/90 drop-shadow">
-                {banner.subtitle}
-              </p>
-            </div>
-          </div>
-        ))}
-        <div className="relative" style={{ paddingTop: "200px", zIndex: 2 }} />
+      <div className="relative overflow-hidden w-full h-[500px] md:h-[700px]">
+        {banners.map((banner, index) => {
+          const isActive = currentBanner === index;
 
+          return (
+            <div
+              key={index}
+              className={`absolute inset-0 transition-opacity duration-1000 ${
+                isActive ? "opacity-100" : "opacity-0"
+              }`}
+              style={{ zIndex: isActive ? 1 : 0 }}
+            >
+              {/* Background Image using Next.js Image */}
+              <Image
+                src={banner.image}
+                alt={banner.title}
+                fill
+                className="object-cover"
+                priority={isActive} // optional: preloads the active banner
+              />
+
+              {/* Overlay */}
+              {banner.overlay && (
+                <div className={`absolute inset-0 ${banner.overlay}`} />
+              )}
+            </div>
+          );
+        })}
+
+        {/* Optional spacer */}
+        <div className="relative z-2" style={{ paddingTop: "200px" }} />
+
+        {/* Banner Indicators */}
         <div className="absolute bottom-4 left-1/2 -translate-x-1/2 flex gap-2 z-10">
           {banners.map((_, index) => (
             <button
               key={index}
               onClick={() => setCurrentBanner(index)}
-              className={`w-2 h-2 rounded-full transition-all ${
+              className={`transition-all w-2 h-2 rounded-full ${
                 currentBanner === index ? "bg-white w-6" : "bg-white/50"
               }`}
               aria-label={`Go to banner ${index + 1}`}
@@ -223,28 +277,21 @@ export default function HomePage() {
           </div>
         </div>
 
-        <div className="max-w-7xl mx-auto px-4 pb-4">
-          <div className="flex items-center gap-3 overflow-x-auto pb-2 scrollbar-hide">
+        <div className="max-w-7xl mx-auto px-4 pb-6">
+          <div
+            className="flex gap-4 overflow-x-auto py-2 
+                  scrollbar-thin scrollbar-thumb-gray-400 scrollbar-track-gray-200 
+                  hover:scrollbar-thumb-gray-600 transition-colors"
+          >
+            {/* Filters Button */}
             <button
               onClick={() => setShowFilters(!showFilters)}
-              className="flex-shrink-0 px-4 py-2 bg-gray-100 hover:bg-gray-200 rounded-full font-medium text-sm transition-colors flex items-center gap-2"
+              className="flex-shrink-0 px-4 py-2 bg-blue-500 text-white rounded-full font-medium text-sm hover:scale-105 transition-transform"
             >
-              <svg
-                className="w-4 h-4"
-                fill="none"
-                viewBox="0 0 24 24"
-                stroke="currentColor"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M12 6V4m0 2a2 2 0 100 4m0-4a2 2 0 110 4m-6 8a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4m6 6v10m6-2a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4"
-                />
-              </svg>
               Filters
             </button>
 
+            {/* Category Buttons */}
             {categories.map((category) => (
               <button
                 key={category}
@@ -253,10 +300,10 @@ export default function HomePage() {
                     category === categoryFilter ? "all" : category
                   )
                 }
-                className={`flex-shrink-0 px-4 py-2 rounded-full font-medium text-sm transition-all ${
+                className={`flex-shrink-0 px-4 py-2 rounded-full font-medium text-sm transition-all whitespace-nowrap ${
                   categoryFilter === category
-                    ? "bg-blue-500 text-white shadow-md"
-                    : "bg-white border border-gray-300 hover:border-gray-400"
+                    ? "bg-blue-500 text-white shadow-lg"
+                    : "bg-gray-100 text-gray-800 hover:bg-gray-200"
                 }`}
               >
                 {categoryIcons[category] || "📦"} {category}

@@ -130,29 +130,57 @@ export function useAnalyticsCalculations({
       .slice(0, 6);
   }, [products]);
 
-  // Heatmap data (7 days x 4 weeks)
+  // Heatmap data (7 days x 4 weeks) - FIXED VERSION
   const heatmapData = useMemo(() => {
-    const weeks = [];
     const daysOfWeek = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    const todayDayOfWeek = today.getDay(); // 0 = Sunday, 6 = Saturday
 
+    // Initialize 4 weeks x 7 days grid
+    const weeks: Array<Array<{ day: string; orders: number; date: string }>> =
+      [];
     for (let week = 0; week < 4; week++) {
       const weekData = [];
       for (let day = 0; day < 7; day++) {
-        const index = week * 7 + day;
-        if (index < salesData.length) {
-          weekData.push({
-            day: daysOfWeek[day],
-            orders: salesData[salesData.length - 1 - index]?.orders || 0,
-          });
-        }
+        weekData.push({
+          day: daysOfWeek[day],
+          orders: 0,
+          date: "",
+        });
       }
-      if (weekData.length > 0) {
-        weeks.unshift(weekData);
-      }
+      weeks.push(weekData);
     }
 
+    // Process orders to fill the heatmap
+    orders.forEach((order) => {
+      if (order.status === "cancelled") return;
+
+      const orderDate = new Date(order.createdAt);
+      orderDate.setHours(0, 0, 0, 0);
+
+      // Calculate how many days ago this order was placed
+      const daysAgo = Math.floor(
+        (today.getTime() - orderDate.getTime()) / (1000 * 60 * 60 * 24)
+      );
+
+      // Only include orders from the last 28 days
+      if (daysAgo < 0 || daysAgo >= 28) return;
+
+      // Calculate which week (0 = current week, 3 = 3 weeks ago)
+      const weekIndex = 3 - Math.floor(daysAgo / 7);
+
+      // Calculate the correct day index
+      // Work backwards from today's day of week
+      const dayIndex = (todayDayOfWeek - (daysAgo % 7) + 7) % 7;
+
+      if (weekIndex >= 0 && weekIndex < 4) {
+        weeks[weekIndex][dayIndex].orders += 1;
+      }
+    });
+
     return weeks;
-  }, [salesData]);
+  }, [orders]);
 
   // Low stock products
   const lowStockProducts = useMemo(

@@ -10,13 +10,10 @@ interface ConversionFunnelChartProps {
 
 export default function ConversionFunnelChart({
   views,
-  cart,
   orders,
   completed,
 }: ConversionFunnelChartProps) {
   const stages = [
-    { label: "Views", value: views, color: "#6366f1", icon: "👁️" },
-    { label: "Cart", value: cart, color: "#8b5cf6", icon: "🛒" },
     { label: "Orders", value: orders, color: "#ec4899", icon: "📦" },
     { label: "Completed", value: completed, color: "#10b981", icon: "✓" },
   ];

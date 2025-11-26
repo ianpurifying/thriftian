@@ -373,56 +373,57 @@ export default function ProductPage() {
                   </div>
                 )}
               </div>
+
+              <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6 mb-6">
+                <h2 className="text-xl font-bold text-gray-900 mb-4">
+                  Product Details
+                </h2>
+                <div className="grid grid-cols-2 gap-x-8 gap-y-3 text-sm">
+                  <div>
+                    <span className="text-gray-600">Brand:</span>
+                    <span className="ml-2 font-medium text-gray-900">
+                      {product.brand || "N/A"}
+                    </span>
+                  </div>
+                  <div>
+                    <span className="text-gray-600">Category:</span>
+                    <span className="ml-2 font-medium text-gray-900">
+                      {product.category}
+                    </span>
+                  </div>
+                  <div>
+                    <span className="text-gray-600">Condition:</span>
+                    <span className="ml-2 font-medium text-gray-900">
+                      {product.condition}
+                    </span>
+                  </div>
+                  <div>
+                    <span className="text-gray-600">Size:</span>
+                    <span className="ml-2 font-medium text-gray-900">
+                      {product.size || "N/A"}
+                    </span>
+                  </div>
+                </div>
+              </div>
+
+              <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6 mb-6">
+                <h2 className="text-xl font-bold text-gray-900 mb-4">
+                  Description
+                </h2>
+                <p className="text-gray-700 leading-relaxed">
+                  {product.description}
+                </p>
+              </div>
+
+              <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+                <h2 className="text-xl font-bold text-gray-900 mb-4">Seller</h2>
+                <p className="text-gray-700">{product.sellerName}</p>
+              </div>
             </div>
           </div>
         </div>
 
-        <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6 mb-6">
-          <h2 className="text-xl font-bold text-gray-900 mb-4">
-            Product Details
-          </h2>
-          <div className="grid grid-cols-2 gap-x-8 gap-y-3 text-sm">
-            <div>
-              <span className="text-gray-600">Brand:</span>
-              <span className="ml-2 font-medium text-gray-900">
-                {product.brand || "N/A"}
-              </span>
-            </div>
-            <div>
-              <span className="text-gray-600">Category:</span>
-              <span className="ml-2 font-medium text-gray-900">
-                {product.category}
-              </span>
-            </div>
-            <div>
-              <span className="text-gray-600">Condition:</span>
-              <span className="ml-2 font-medium text-gray-900">
-                {product.condition}
-              </span>
-            </div>
-            <div>
-              <span className="text-gray-600">Size:</span>
-              <span className="ml-2 font-medium text-gray-900">
-                {product.size || "N/A"}
-              </span>
-            </div>
-          </div>
-        </div>
-
-        <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6 mb-6">
-          <h2 className="text-xl font-bold text-gray-900 mb-4">Description</h2>
-          <p className="text-gray-700 leading-relaxed">{product.description}</p>
-        </div>
-
-        <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6 mb-6">
-          <h2 className="text-xl font-bold text-gray-900 mb-4">
-            Seller Information
-          </h2>
-          <p className="text-gray-700">
-            <span className="font-medium">Sold by:</span> {product.sellerName}
-          </p>
-        </div>
-
+        {/* Customer Reviews Section */}
         <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
           <div className="flex justify-between items-center mb-6">
             <h2 className="text-2xl font-bold text-gray-900">

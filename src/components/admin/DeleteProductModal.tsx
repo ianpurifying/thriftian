@@ -102,7 +102,7 @@ export default function DeleteProductModal({
         <div className="bg-red-50 border border-red-200 rounded-lg p-3 mb-6">
           <p className="text-sm text-red-800">
             <strong>Warning:</strong> This will permanently delete the product,
-            all associated images, and remove it from any wishlists.
+            and all associated images.
           </p>
         </div>
 

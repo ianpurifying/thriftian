@@ -4,6 +4,7 @@
 interface HeatmapDay {
   day: string;
   orders: number;
+  date?: string; // Add optional date field for debugging
 }
 
 interface SalesHeatmapProps {
@@ -34,6 +35,13 @@ export function SalesHeatmap({ heatmapData }: SalesHeatmapProps) {
     return "#1e40af";
   };
 
+  // Get today's day of week (0 = Sunday, 6 = Saturday)
+  const today = new Date();
+  const todayDayOfWeek = today.getDay();
+
+  // Day labels starting from Sunday
+  const dayLabels = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
+
   return (
     <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6 animate-[fadeIn_1.2s_ease-out]">
       <h2 className="text-xl font-bold text-gray-900 mb-6">Sales Heatmap</h2>
@@ -42,29 +50,46 @@ export function SalesHeatmap({ heatmapData }: SalesHeatmapProps) {
       <div className="space-y-2">
         {heatmapData.map((week, weekIndex) => (
           <div key={weekIndex} className="flex gap-2">
-            {week.map((day, dayIndex) => (
-              <div
-                key={dayIndex}
-                className="flex-1 group relative"
-                style={{
-                  animationDelay: `${(weekIndex * 7 + dayIndex) * 50}ms`,
-                }}
-              >
+            {week.map((day, dayIndex) => {
+              // Check if this is today
+              const isToday =
+                weekIndex === heatmapData.length - 1 &&
+                dayIndex === todayDayOfWeek;
+
+              return (
                 <div
-                  className="h-12 rounded-lg transition-all duration-300 hover:scale-110 cursor-pointer"
-                  style={{ backgroundColor: getColor(day.orders) }}
+                  key={dayIndex}
+                  className="flex-1 group relative"
+                  style={{
+                    animationDelay: `${(weekIndex * 7 + dayIndex) * 50}ms`,
+                  }}
                 >
-                  <div className="hidden group-hover:block absolute bottom-full mb-2 left-1/2 transform -translate-x-1/2 bg-gray-900 text-white text-xs rounded py-1 px-2 whitespace-nowrap z-10">
-                    {day.day}: {day.orders} orders
+                  <div
+                    className={`h-12 rounded-lg transition-all duration-300 hover:scale-110 cursor-pointer ${
+                      isToday ? "ring-2 ring-blue-500 ring-offset-2" : ""
+                    }`}
+                    style={{ backgroundColor: getColor(day.orders) }}
+                  >
+                    <div className="hidden group-hover:block absolute bottom-full mb-2 left-1/2 transform -translate-x-1/2 bg-gray-900 text-white text-xs rounded py-1 px-2 whitespace-nowrap z-10">
+                      {day.day}: {day.orders} orders
+                      {isToday && " (Today)"}
+                    </div>
                   </div>
+                  {weekIndex === 0 && (
+                    <p
+                      className={`text-xs text-center mt-1 ${
+                        dayIndex === todayDayOfWeek &&
+                        weekIndex === heatmapData.length - 1
+                          ? "text-blue-600 font-semibold"
+                          : "text-gray-500"
+                      }`}
+                    >
+                      {dayLabels[dayIndex]}
+                    </p>
+                  )}
                 </div>
-                {weekIndex === 0 && (
-                  <p className="text-xs text-gray-500 text-center mt-1">
-                    {day.day}
-                  </p>
-                )}
-              </div>
-            ))}
+              );
+            })}
           </div>
         ))}
       </div>
@@ -83,6 +108,11 @@ export function SalesHeatmap({ heatmapData }: SalesHeatmapProps) {
           ))}
         </div>
         <span>More</span>
+      </div>
+
+      {/* Debug info - remove in production */}
+      <div className="mt-4 text-xs text-gray-400 border-t pt-4">
+        Today is {dayLabels[todayDayOfWeek]} (index: {todayDayOfWeek})
       </div>
     </div>
   );
