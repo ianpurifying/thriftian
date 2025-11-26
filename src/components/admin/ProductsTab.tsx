@@ -5,6 +5,8 @@ import { useAuth } from "@/contexts/AuthContext";
 import { useToast } from "@/hooks/useToast";
 import ProductDetailModal from "./ProductDetailModal";
 import RejectModal from "./RejectModal";
+import EditProductModal from "./EditProductModal";
+import DeleteProductModal from "./DeleteProductModal";
 
 interface ProductsTabProps {
   products: Product[];
@@ -32,6 +34,8 @@ export default function ProductsTab({
   const [rejectingProduct, setRejectingProduct] = useState<Product | null>(
     null
   );
+  const [editingProduct, setEditingProduct] = useState<Product | null>(null);
+  const [deletingProduct, setDeletingProduct] = useState<Product | null>(null);
   const [selectedProducts, setSelectedProducts] = useState<Set<string>>(
     new Set()
   );
@@ -396,24 +400,38 @@ export default function ProductsTab({
                     {new Date(product.createdAt).toLocaleDateString()}
                   </td>
                   <td className="px-4 py-3">
-                    {product.status === "pending" && (
-                      <div className="flex gap-2">
-                        <button
-                          onClick={() => handleApprove(product.id)}
-                          disabled={loadingAction === product.id}
-                          className="px-3 py-1.5 bg-green-600 text-white rounded-lg hover:bg-green-700 disabled:opacity-50 text-sm font-medium"
-                        >
-                          {loadingAction === product.id ? "..." : "Approve"}
-                        </button>
-                        <button
-                          onClick={() => setRejectingProduct(product)}
-                          disabled={loadingAction === product.id}
-                          className="px-3 py-1.5 bg-red-600 text-white rounded-lg hover:bg-red-700 disabled:opacity-50 text-sm font-medium"
-                        >
-                          Reject
-                        </button>
-                      </div>
-                    )}
+                    <div className="flex gap-2">
+                      {product.status === "pending" && (
+                        <>
+                          <button
+                            onClick={() => handleApprove(product.id)}
+                            disabled={loadingAction === product.id}
+                            className="px-3 py-1.5 bg-green-600 text-white rounded-lg hover:bg-green-700 disabled:opacity-50 text-sm font-medium"
+                          >
+                            {loadingAction === product.id ? "..." : "Approve"}
+                          </button>
+                          <button
+                            onClick={() => setRejectingProduct(product)}
+                            disabled={loadingAction === product.id}
+                            className="px-3 py-1.5 bg-red-600 text-white rounded-lg hover:bg-red-700 disabled:opacity-50 text-sm font-medium"
+                          >
+                            Reject
+                          </button>
+                        </>
+                      )}
+                      <button
+                        onClick={() => setEditingProduct(product)}
+                        className="px-3 py-1.5 bg-blue-600 text-white rounded-lg hover:bg-blue-700 text-sm font-medium"
+                      >
+                        Edit
+                      </button>
+                      <button
+                        onClick={() => setDeletingProduct(product)}
+                        className="px-3 py-1.5 bg-gray-800 text-white rounded-lg hover:bg-gray-900 text-sm font-medium"
+                      >
+                        Delete
+                      </button>
+                    </div>
                   </td>
                 </tr>
               ))}
@@ -488,6 +506,22 @@ export default function ProductsTab({
           onConfirm={(reason) => handleReject(rejectingProduct.id, reason)}
           onCancel={() => setRejectingProduct(null)}
           loading={loadingAction === rejectingProduct.id}
+        />
+      )}
+
+      {editingProduct && (
+        <EditProductModal
+          product={editingProduct}
+          onClose={() => setEditingProduct(null)}
+          onSuccess={onRefresh}
+        />
+      )}
+
+      {deletingProduct && (
+        <DeleteProductModal
+          product={deletingProduct}
+          onClose={() => setDeletingProduct(null)}
+          onSuccess={onRefresh}
         />
       )}
     </div>

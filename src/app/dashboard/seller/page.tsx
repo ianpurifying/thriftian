@@ -1,4 +1,4 @@
-// app/dashboard/seller/page.tsx
+// src/app/dashboard/seller/page.tsx
 "use client";
 
 import { useEffect, useState, useMemo, useCallback } from "react";
@@ -9,6 +9,7 @@ import Button from "@/components/Button";
 import Modal from "@/components/Modal";
 import Input from "@/components/Input";
 import Loading from "@/components/Loading";
+import SellerAnalytics from "@/components/seller/SellerAnalytics";
 
 interface ProductWithMetrics extends Product {
   views?: number;
@@ -55,6 +56,7 @@ export default function SellerDashboard() {
   const [showCancelModal, setShowCancelModal] = useState(false);
   const [cancelReason, setCancelReason] = useState("");
   const [updatingOrderId, setUpdatingOrderId] = useState<string | null>(null);
+  const [showAnalyticsSection, setShowAnalyticsSection] = useState(true);
 
   const generateTrackingNumber = (length = 12) => {
     const chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
@@ -219,6 +221,7 @@ export default function SellerDashboard() {
       console.error("Failed to add tracking:", error);
     }
   };
+
   const handleUpdateOrderStatus = async (
     orderId: string,
     newStatus: OrderStatus
@@ -293,6 +296,7 @@ export default function SellerDashboard() {
       setUpdatingOrderId(null);
     }
   };
+
   const handleBulkDelete = async () => {
     if (!firebaseUser || selectedProducts.size === 0) return;
 
@@ -345,7 +349,7 @@ export default function SellerDashboard() {
       if (format === "csv") {
         const headers = ["Date", "Order ID", "Buyer", "Amount", "Status"];
         const rows = orders.map((order) => [
-          new Date(order.createdAt).toLocaleDateString("en-US"), // <-- fixed
+          new Date(order.createdAt).toLocaleDateString("en-US"),
           order.id.substring(0, 8),
           order.buyerName,
           order.totalAmount.toFixed(2),
@@ -419,6 +423,26 @@ export default function SellerDashboard() {
       </div>
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        {/* Time Range Analytics Section */}
+        <div className="mb-8">
+          <div className="flex items-center justify-between mb-6">
+            <h2 className="text-2xl font-bold text-gray-900">Analytics</h2>
+            <Button
+              onClick={() => setShowAnalyticsSection(!showAnalyticsSection)}
+              variant="secondary"
+              className="text-sm"
+            >
+              {showAnalyticsSection ? "Hide" : "Show"} Analytics
+            </Button>
+          </div>
+
+          {showAnalyticsSection && (
+            <div className="bg-gray-50 rounded-lg p-6 border-2 border-indigo-200">
+              <SellerAnalytics orders={orders} sellerName={user?.name} />
+            </div>
+          )}
+        </div>
+
         {/* Analytics Cards */}
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
           <div className="bg-white rounded-lg border border-gray-200 p-6 hover:shadow-md transition-shadow">

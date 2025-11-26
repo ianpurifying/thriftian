@@ -2,7 +2,9 @@
 import { NextRequest, NextResponse } from "next/server";
 import { requireAuth } from "@/lib/middleware/auth";
 import { orderRepository } from "@/lib/repositories/orderRepository";
+import { userRepository } from "@/lib/repositories/userRepository";
 import { notificationRepository } from "@/lib/repositories/notificationRepository";
+import { emailService } from "@/lib/services/emailService";
 import { z } from "zod";
 
 const statusSchema = z.object({
@@ -54,6 +56,65 @@ export async function PATCH(
       type: "order",
       isRead: false,
     });
+
+    // Send email notifications based on status
+    try {
+      const buyer = await userRepository.findById(order.buyerId);
+      if (buyer) {
+        switch (validation.data.status) {
+          case "confirmed":
+            // Order has been confirmed by seller
+            await emailService.sendGenericEmail(
+              buyer.email,
+              buyer.name,
+              "Order Confirmed - Thriftian Marketplace",
+              `<p>Hello ${buyer.name},</p>
+               <p>Your order #${params.orderId} has been confirmed and is being prepared for shipment.</p>
+               <p>You will receive another notification once your order has been shipped.</p>
+               <p>Thank you for shopping with Thriftian Marketplace!</p>`
+            );
+            break;
+
+          case "shipped":
+            // Order has been shipped (tracking number should be set separately)
+            if (order.trackingNumber) {
+              await emailService.sendTrackingUpdate(
+                buyer.email,
+                buyer.name,
+                params.orderId,
+                order.trackingNumber
+              );
+            }
+            break;
+
+          case "delivered":
+            // Order has been delivered
+            await emailService.sendOrderDelivered(
+              buyer.email,
+              buyer.name,
+              params.orderId,
+              order.trackingNumber || "N/A"
+            );
+            break;
+
+          case "cancelled":
+            // Order has been cancelled
+            await emailService.sendGenericEmail(
+              buyer.email,
+              buyer.name,
+              "Order Cancelled - Thriftian Marketplace",
+              `<p>Hello ${buyer.name},</p>
+               <p>Your order #${params.orderId} has been cancelled.</p>
+               <p>If you have any questions, please contact our support team.</p>
+               <p>Thank you for your understanding.</p>`
+            );
+            break;
+        }
+      }
+    } catch (emailError) {
+      console.error("Email send failed:", emailError);
+      // Don't fail the request if email fails
+    }
 
     return NextResponse.json({ success: true });
   } catch (error: unknown) {

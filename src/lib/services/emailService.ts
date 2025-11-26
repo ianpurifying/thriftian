@@ -75,6 +75,34 @@ export class EmailService {
   }
 
   /**
+   * Send order delivered email
+   */
+  async sendOrderDelivered(
+    to: string,
+    toName: string,
+    orderId: string,
+    trackingNumber: string
+  ): Promise<void> {
+    const emailParams = new EmailParams()
+      .setFrom(sender)
+      .setTo([new Recipient(to, toName)])
+      .setSubject("Your Order Has been Delivered - Thriftian Marketplace")
+      .setTemplateId(process.env.MAILERSEND_TEMPLATE_ORDER_DELIVERED || "")
+      .setPersonalization([
+        {
+          email: to,
+          data: {
+            order_id: orderId,
+            tracking_number: trackingNumber,
+            buyer_name: toName,
+          },
+        },
+      ]);
+
+    await mailerSend.email.send(emailParams);
+  }
+
+  /**
    * Send dispute alert email
    */
   async sendDisputeAlert(
