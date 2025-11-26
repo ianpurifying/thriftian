@@ -1,4 +1,4 @@
-// src/components/SellerAnalytics.tsx
+// src/components/seller/SellerAnalytics.tsx
 "use client";
 
 import { useEffect, useState } from "react";

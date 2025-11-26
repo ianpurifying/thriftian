@@ -4,7 +4,7 @@
 import { useEffect, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { useAuth } from "@/contexts/AuthContext";
-import { Product, ProductCondition } from "@/lib/types";
+import { Product, ProductCondition, ProductImage } from "@/lib/types";
 import Button from "@/components/Button";
 import Input from "@/components/Input";
 import Textarea from "@/components/Textarea";
@@ -37,6 +37,11 @@ export default function EditProductPage() {
     price: "",
     stock: "",
   });
+
+  // ✅ NEW: Image management states
+  const [images, setImages] = useState<string[]>([]);
+  const [uploading, setUploading] = useState(false);
+
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
 
@@ -68,6 +73,12 @@ export default function EditProductPage() {
           price: data.product.price.toString(),
           stock: data.product.stock.toString(),
         });
+
+        setImages(
+          data.product.images.map((img: ProductImage) =>
+            JSON.stringify({ url: img.url, publicId: img.publicId })
+          )
+        );
       }
     } catch (error) {
       console.error("Failed to fetch product:", error);
@@ -76,9 +87,65 @@ export default function EditProductPage() {
     }
   };
 
+  // ✅ NEW: Image upload handler (same as Add Product)
+  const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = e.target.files;
+    if (!files || !firebaseUser) return;
+
+    setUploading(true);
+
+    try {
+      const token = await firebaseUser.getIdToken();
+
+      for (let i = 0; i < Math.min(files.length, 5 - images.length); i++) {
+        const file = files[i];
+        const reader = new FileReader();
+
+        reader.onloadend = async () => {
+          const base64 = reader.result as string;
+
+          const response = await fetch("/api/upload", {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+              Authorization: `Bearer ${token}`,
+            },
+            body: JSON.stringify({ image: base64, folder: "products" }),
+          });
+
+          if (response.ok) {
+            const data = await response.json();
+            setImages((prev) => [
+              ...prev,
+              JSON.stringify({ url: data.url, publicId: data.publicId }),
+            ]);
+          }
+        };
+
+        reader.readAsDataURL(file);
+      }
+    } catch (error) {
+      console.error("Upload failed:", error);
+      alert("Failed to upload images");
+    } finally {
+      setUploading(false);
+    }
+  };
+
+  // ✅ NEW: Remove image handler
+  const handleRemoveImage = (index: number) => {
+    setImages((prev) => prev.filter((_, i) => i !== index));
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!firebaseUser) return;
+
+    // ✅ NEW: Validate images
+    if (images.length === 0) {
+      alert("Please upload at least one product image");
+      return;
+    }
 
     setSubmitting(true);
 
@@ -96,6 +163,7 @@ export default function EditProductPage() {
           size: formData.size || null,
           price: parseFloat(formData.price),
           stock: parseInt(formData.stock),
+          images: images.map((img) => JSON.parse(img)), // ✅ NEW: Include images
         }),
       });
 
@@ -199,13 +267,47 @@ export default function EditProductPage() {
             }
           />
 
-          <Input
+          {/* ✅ FIXED: Category now uses dropdown instead of text input */}
+          <Select
             label="Category"
             value={formData.category}
-            onChange={(e) =>
-              setFormData({ ...formData, category: e.target.value })
-            }
-            required
+            onChange={(value) => setFormData({ ...formData, category: value })}
+            options={[
+              { label: "— Apparel —", value: "" },
+              { label: "Tops", value: "Tops" },
+              { label: "Bottoms", value: "Bottoms" },
+              { label: "Dresses & Jumpsuits", value: "Dresses & Jumpsuits" },
+              { label: "Outerwear", value: "Outerwear" },
+              { label: "Activewear", value: "Activewear" },
+              {
+                label: "Sleepwear & Loungewear",
+                value: "Sleepwear & Loungewear",
+              },
+
+              { label: "— Footwear —", value: "" },
+              { label: "Sneakers", value: "Sneakers" },
+              { label: "Sandals", value: "Sandals" },
+              { label: "Boots", value: "Boots" },
+              { label: "Heels", value: "Heels" },
+              { label: "Flats", value: "Flats" },
+
+              { label: "— Accessories —", value: "" },
+              { label: "Bags & Wallets", value: "Bags & Wallets" },
+              { label: "Belts", value: "Belts" },
+              { label: "Caps & Hats", value: "Caps & Hats" },
+              { label: "Jewelry", value: "Jewelry" },
+              { label: "Sunglasses", value: "Sunglasses" },
+              { label: "Scarves & Gloves", value: "Scarves & Gloves" },
+
+              {
+                label: "— Vintage & Collectibles —",
+                value: "",
+              },
+              { label: "Vintage Clothing", value: "Vintage Clothing" },
+              { label: "Vintage Accessories", value: "Vintage Accessories" },
+              { label: "Collectibles", value: "Collectibles" },
+              { label: "Retro", value: "Retro / Y2K" },
+            ]}
           />
         </div>
 
@@ -252,8 +354,53 @@ export default function EditProductPage() {
           />
         </div>
 
+        {/* ✅ NEW: Image upload section (same as Add Product) */}
+        <div>
+          <label className="block mb-2 font-medium">
+            Product Images (max 5)
+          </label>
+          <input
+            type="file"
+            accept="image/*"
+            multiple
+            onChange={handleImageUpload}
+            className="block w-full text-sm"
+            disabled={uploading || images.length >= 5}
+          />
+          {uploading && (
+            <p className="text-sm text-gray-600 mt-2">Uploading...</p>
+          )}
+
+          {images.length > 0 && (
+            <div className="grid grid-cols-5 gap-2 mt-4">
+              {images.map((img, index) => {
+                const parsed = JSON.parse(img);
+                return (
+                  <div
+                    key={index}
+                    className="relative aspect-square bg-gray-100 rounded"
+                  >
+                    <img
+                      src={parsed.url}
+                      alt=""
+                      className="w-full h-full object-cover rounded"
+                    />
+                    <button
+                      type="button"
+                      onClick={() => handleRemoveImage(index)}
+                      className="absolute top-1 right-1 bg-red-600 text-white rounded-full w-6 h-6 flex items-center justify-center"
+                    >
+                      ×
+                    </button>
+                  </div>
+                );
+              })}
+            </div>
+          )}
+        </div>
+
         <div className="flex gap-4">
-          <Button type="submit" disabled={submitting}>
+          <Button type="submit" disabled={submitting || uploading}>
             {submitting ? "Updating..." : "Update Product"}
           </Button>
           <Button
