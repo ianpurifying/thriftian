@@ -729,59 +729,6 @@ export default function SellerAnalytics({ orders }: SellerAnalyticsProps) {
           </button>
         </div>
       </div>
-
-      {/* Summary Table */}
-      <div className="bg-white rounded-lg border border-gray-200 p-6">
-        <h2 className="text-xl font-semibold text-gray-900 mb-4">
-          Analytics Summary
-        </h2>
-        <div className="overflow-x-auto">
-          <table className="w-full">
-            <thead>
-              <tr className="border-b border-gray-200">
-                <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Period
-                </th>
-                <th className="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Sales
-                </th>
-                <th className="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Items Sold
-                </th>
-                <th className="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Orders
-                </th>
-                <th className="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Avg Order
-                </th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-gray-200">
-              {Object.entries(analytics).map(([period, data]) => (
-                <tr key={period} className="hover:bg-gray-50">
-                  <td className="px-4 py-4 text-sm font-medium text-gray-900 capitalize">
-                    {period.replace(/([A-Z])/g, " $1").trim()}
-                  </td>
-                  <td className="px-4 py-4 text-sm text-gray-900 text-right font-semibold">
-                    {formatCurrency(data.sales)}
-                  </td>
-                  <td className="px-4 py-4 text-sm text-gray-900 text-right">
-                    {data.quantity}
-                  </td>
-                  <td className="px-4 py-4 text-sm text-gray-900 text-right">
-                    {data.orders}
-                  </td>
-                  <td className="px-4 py-4 text-sm text-gray-900 text-right">
-                    {formatCurrency(
-                      data.orders > 0 ? data.sales / data.orders : 0
-                    )}
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-      </div>
     </div>
   );
 }
