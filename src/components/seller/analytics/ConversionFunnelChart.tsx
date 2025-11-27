@@ -53,7 +53,7 @@ export default function ConversionFunnelChart({
                   <div>
                     <p className="font-semibold text-gray-900">{stage.label}</p>
                     <p className="text-sm text-gray-500">
-                      {stage.value.toLocaleString()} users
+                      {stage.value.toLocaleString()}
                     </p>
                   </div>
                 </div>
